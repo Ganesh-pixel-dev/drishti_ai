@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{% if not result %}
+
+<!-- Decorative background glow orbs -->
+<div style="position: fixed; top: 20%; left: -120px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,0,127,0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; animation: orbFloat 8s ease-in-out infinite;"></div>
+<div style="position: fixed; top: 30%; right: -100px; width: 350px; height: 350px; background: radial-gradient(circle, rgba(0,240,255,0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; animation: orbFloat 10s ease-in-out infinite reverse;"></div>
+<div style="position: fixed; bottom: 10%; left: 5%; width: 250px; height: 250px; background: radial-gradient(circle, rgba(0,240,255,0.05) 0%, transparent 70%); border-radius: 50%; pointer-events: none; animation: orbFloat 12s ease-in-out infinite;"></div>
+<div style="position: fixed; bottom: 15%; right: 8%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,0,127,0.05) 0%, transparent 70%); border-radius: 50%; pointer-events: none; animation: orbFloat 9s ease-in-out infinite reverse;"></div>
+<style>@keyframes orbFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-30px); } }</style>
+
+<div class="glass-card animate-in" style="max-width: 680px; margin: 24px auto; padding: 28px 36px;">
+    <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 14px;">
+        <div style="display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent-magenta), var(--accent-cyan)); border-radius: 14px; flex-shrink: 0; box-shadow: 0 5px 15px var(--glow-magenta);">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+        </div>
+        <div>
+            <h1 style="font-size: 1.8em; margin-bottom: 2px; background: linear-gradient(135deg, var(--accent-magenta), var(--accent-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Text Forensics</h1>
+            <p style="font-size: 0.9em; color: var(--text-secondary);">Detect AI authorship, plagiarism &amp; linguistic anomalies</p>
+        </div>
+    </div>
+
+    <form method="POST" style="margin-top: 0;">
+        {% csrf_token %}
+        
+        <div style="position: relative;">
+            <textarea 
+                name="text_content" 
+                id="textInput"
+                placeholder="Paste your text here for analysis..."
+                required 
+                style="width: 100%; box-sizing: border-box; min-height: 220px; max-height: 260px; padding: 18px; font-family: 'Outfit', sans-serif; font-size: 0.95em; line-height: 1.7; border: 1px solid var(--border-medium); border-radius: 14px; background: var(--bg-elevated); color: var(--text-primary); resize: none; transition: all 0.3s ease; outline: none;"
+            ></textarea>
+            <div id="charCount" style="position: absolute; bottom: 12px; right: 12px; font-size: 0.8em; color: var(--text-muted); background: var(--bg-card); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+                0 characters
+            </div>
+        </div>
+
+        <div style="margin-top: 10px; display: flex; gap: 12px; align-items: center; color: var(--text-muted); font-size: 0.8em;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span>Minimum 50 characters recommended for accurate analysis</span>
+        </div>
+
+        <button type="submit" class="btn" style="margin-top: 14px; width: 100%; font-size: 15px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            <span>Analyze Text</span>
+        </button>
+    </form>
+
+    {% if error %}
+        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--accent-red); padding: 12px 16px; border-radius: 12px; margin-top: 14px; display: flex; align-items: center; gap: 12px; font-size: 0.9em;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <span><strong>Error:</strong> {{ error }}</span>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    const textInput = document.getElementById('textInput');
+    const charCount = document.getElementById('charCount');
+
+    textInput.addEventListener('input', () => {
+        const count = textInput.value.length;
+        charCount.textContent = `${count} character${count !== 1 ? 's' : ''}`;
+    });
+
+    textInput.addEventListener('focus', () => {
+        textInput.style.borderColor = 'var(--accent-magenta)';
+        textInput.style.background = 'var(--bg-card)';
+    });
+
+    textInput.addEventListener('blur', () => {
+        textInput.style.borderColor = 'var(--border-medium)';
+        textInput.style.background = 'var(--bg-elevated)';
+    });
+</script>
+
+{% else %}
+<form style="display: none;">{% csrf_token %}</form>
+<div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+    <a href="/text" class="btn btn-secondary" style="padding: 10px 20px; font-size: 13px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+        </svg>
+        <span>New Analysis</span>
+    </a>
+</div>
+{% endif %}
+
+{% if result %}
+<style>
+    .results-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    @media (max-width: 968px) {
+        .results-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .text-display {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 24px;
+        max-height: 500px;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .text-display::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 40px;
+        background: linear-gradient(to bottom, var(--bg-elevated), transparent);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .verdict-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 20px;
+        padding: 40px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .verdict-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+    }
+
+    .verdict-card.danger::before {
+        background: linear-gradient(180deg, var(--accent-red), var(--accent-pink));
+    }
+
+    .verdict-card.success::before {
+        background: linear-gradient(180deg, var(--accent-green), var(--accent-cyan));
+    }
+</style>
+
+<div class="results-grid animate-in">
+    <!-- Text Display -->
+    <div class="glass-card">
+        <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--text-primary);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-magenta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            Analyzed Text
+        </h3>
+        <div class="text-display">
+            <p style="color: var(--text-secondary); line-height: 1.8; white-space: pre-wrap; margin: 0;">{{ submitted_text }}</p>
+        </div>
+        <div style="margin-top: 16px; display: flex; gap: 12px; flex-wrap: wrap;">
+            <span class="badge">{{ submitted_text|wordcount }} words</span>
+            <span class="badge">{{ submitted_text|length }} characters</span>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- AI Detection Verdict -->
+        <div class="verdict-card {% if result.is_ai %}danger{% else %}success{% endif %}">
+            {% if result.is_ai %}
+                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; margin-bottom: 16px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span style="color: var(--accent-red); font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">AI Detected</span>
+                </div>
+                <h1 style="font-size: 2em; margin-bottom: 12px; color: var(--accent-red);">AI-Generated Text</h1>
+                <p style="color: var(--text-secondary); line-height: 1.6;">This text exhibits low perplexity and high predictability patterns consistent with large language model generation.</p>
+            {% else %}
+                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; margin-bottom: 16px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span style="color: var(--accent-green); font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Human Authored</span>
+                </div>
+                <h1 style="font-size: 2em; margin-bottom: 12px; color: var(--accent-green);">Human-Written Content</h1>
+                <p style="color: var(--text-secondary); line-height: 1.6;">The text demonstrates natural variation and burstiness characteristic of human composition and creative expression.</p>
+            {% endif %}
+
+            <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; margin-top: 24px;">
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <div>
+                        <h4 style="margin: 0 0 8px 0; color: var(--text-primary); font-size: 0.95em;">Analysis Details</h4>
+                        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9em; line-height: 1.6;">{{ result.explanation }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plagiarism Check -->
+        <div class="glass-card" style="{% if result.plagiarism_found %}border: 1px solid rgba(239, 68, 68, 0.3);{% endif %}">
+            <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--text-primary);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                Plagiarism Detection
+            </h3>
+
+            <div style="padding: 16px; background: {% if result.plagiarism_found %}rgba(239, 68, 68, 0.05){% else %}rgba(16, 185, 129, 0.05){% endif %}; border: 1px solid {% if result.plagiarism_found %}rgba(239, 68, 68, 0.2){% else %}rgba(16, 185, 129, 0.2){% endif %}; border-radius: 12px;">
+                <p style="margin: 0; color: {% if result.plagiarism_found %}var(--accent-red){% else %}var(--accent-green){% endif %}; font-weight: 600;">
+                    {{ result.plagiarism_message }}
+                </p>
+            </div>
+
+            {% if result.plagiarism_found %}
+                <div style="margin-top: 20px;">
+                    <h4 style="margin: 0 0 12px 0; color: var(--text-muted); font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Matching Sources:</h4>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        {% for source in result.plagiarism_sources %}
+                        <a href="{{ source.url }}" target="_blank" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 12px; text-decoration: none; transition: all 0.3s ease;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <line x1="10" y1="14" x2="21" y2="3"></line>
+                            </svg>
+                            <div style="flex: 1;">
+                                <p style="margin: 0; color: var(--text-primary); font-weight: 500;">{{ source.title }}</p>
+                                <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85em;">{{ source.url }}</p>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Include Chat Widget -->
+{% include 'chat_widget.html' %}
+
+{% endif %}
+{% endblock %}

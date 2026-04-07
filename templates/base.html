@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drishti AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #05050A; /* Deep dark void */
+            --bg-card: rgba(15, 15, 25, 0.75); /* Deep glass */
+            --bg-elevated: rgba(30, 30, 45, 0.85);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0c8;
+            --text-muted: #707085;
+            
+            /* Vibrant Fun Setup */
+            --accent-cyan: #00f0ff;
+            --accent-magenta: #ff007f;
+            --accent-lime: #a3ff00;
+            --accent-gold: #ffaa00;
+            --accent-red: #ff3366;
+            
+            --border-subtle: rgba(255, 255, 255, 0.05);
+            --border-medium: rgba(255, 255, 255, 0.15);
+            --glow-cyan: rgba(0, 240, 255, 0.4);
+            --glow-magenta: rgba(255, 0, 127, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            overflow-x: hidden;
+            display: block; /* Back to normal horizontal flow */
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        /* Abstract energetic background */
+        .ambient-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -2;
+            background: 
+                radial-gradient(circle at 80% 20%, rgba(255,0,127,0.12) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(0,240,255,0.12) 0%, transparent 40%),
+                radial-gradient(circle at 10% 10%, rgba(163,255,0,0.04) 0%, transparent 30%);
+            filter: blur(60px);
+            animation: pulse-bg 15s infinite alternate;
+        }
+        
+        .ambient-grid {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(1000px) rotateX(60deg) scale(2.5) translateY(-20%);
+            transform-origin: top;
+            opacity: 0.5;
+            animation: move-grid 20s linear infinite;
+        }
+        
+        @keyframes pulse-bg {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+        @keyframes move-grid {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 50px; }
+        }
+
+        /* === LAYOUT === */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px 32px 32px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0;
+            padding-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .logo-top {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .logo-top span {
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px var(--glow-cyan);
+        }
+
+        .nav {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 22px;
+            border-radius: 100px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-link svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-medium);
+            color: white;
+        }
+        .nav-link:hover svg {
+            opacity: 1;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--accent-magenta), var(--accent-cyan));
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 10px 25px var(--glow-cyan);
+        }
+        .nav-link.active svg {
+            opacity: 1;
+        }
+
+        /* === MAIN CONTENT === */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-medium);
+            border-radius: 28px;
+            padding: 40px;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent-magenta), transparent);
+            opacity: 0.8;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .badge-success { background: rgba(163, 255, 0, 0.1); border-color: rgba(163, 255, 0, 0.3); color: var(--accent-lime); }
+        .badge-danger { background: rgba(255, 51, 102, 0.1); border-color: rgba(255, 51, 102, 0.3); color: var(--accent-red); }
+        .badge-warning { background: rgba(255, 170, 0, 0.1); border-color: rgba(255, 170, 0, 0.3); color: var(--accent-gold); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 30px;
+            border-radius: 100px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent-magenta), var(--accent-cyan));
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 15px;
+            cursor: pointer;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 25px var(--glow-magenta), 0 0 15px var(--glow-cyan);
+        }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            box-shadow: none;
+            border: 1px solid var(--border-subtle);
+        }
+        .btn-secondary:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px var(--glow-cyan);
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-cyan); }
+        
+        @media (max-width: 768px) {
+            .header { justify-content: center; flex-direction: column; }
+            .glass-card { padding: 20px; }
+        }
+
+        /* PAGE SMOOTH TRANSITIONS */
+        .page-translatable {
+            opacity: 0; 
+            transform: translateY(20px) scale(0.98);
+            animation: slideFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes slideFadeIn {
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        .page-exit {
+            animation: slideFadeOut 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+        }
+        @keyframes slideFadeOut {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(20px) scale(0.98); }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-bg"></div>
+    <div class="ambient-grid"></div>
+
+    <div class="container page-translatable" id="mainWrapper">
+        <header class="header">
+            <a href="/" class="logo-top">Drishti<span>AI</span></a>
+            
+            <nav class="nav" style="margin-left: auto;">
+                {% with path=request.path %}
+                <a href="/" class="nav-link {% if path == '/' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    Image
+                </a>
+                <a href="/video/" class="nav-link {% if '/video' in path %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                    Video
+                </a>
+                <a href="/text/" class="nav-link {% if '/text' in path %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    Text
+                </a>
+                {% endwith %}
+            </nav>
+        </header>
+
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script>
+        // Smooth page exit mapping
+        document.querySelectorAll('a.nav-link, a.logo-top').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if(this.getAttribute('href').startsWith('/')) {
+                    e.preventDefault();
+                    const href = this.getAttribute('href');
+                    document.getElementById('mainWrapper').classList.add('page-exit');
+                    setTimeout(() => {
+                        window.location.href = href;
+                    }, 350);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

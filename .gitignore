@@ -1,0 +1,26 @@
+# Secrets
+.env
+
+# Media & Database
+media/
+db.sqlite3
+
+# Python/Environment
+__pycache__/
+*.py[cod]
+*$py.class
+env/
+venv/
+.venv/
+
+# AI/Assistant Data
+.gemini/
+.agents/
+.agent/
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Static files (if collected)
+staticfiles/
