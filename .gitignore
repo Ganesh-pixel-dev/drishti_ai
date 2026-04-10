@@ -24,3 +24,9 @@ desktop.ini
 
 # Static files (if collected)
 staticfiles/
+
+# Forensic Temp Files
+temp_ela_*.jpg
+_vframe_*.jpg
+vframe_*.jpg
+results_cache/

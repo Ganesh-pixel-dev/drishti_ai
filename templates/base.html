@@ -175,15 +175,20 @@
         /* === MAIN CONTENT === */
         .glass-card {
             background: var(--bg-card);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border: 1px solid var(--border-medium);
             border-radius: 28px;
             padding: 40px;
             position: relative;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.7);
             overflow: hidden;
-            transition: transform 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 50px 120px rgba(0,0,0,0.8);
         }
         
         .glass-card::before {
@@ -192,6 +197,7 @@
             top: 0; left: 0; width: 100%; height: 3px;
             background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent-magenta), transparent);
             opacity: 0.8;
+            filter: blur(1px);
         }
 
         .badge {
@@ -321,6 +327,80 @@
                 }
             });
         });
+
+        // --- GLOBAL FORENSIC PROGRESS HUD ---
+        const startForensicScan = () => {
+            const loader = document.getElementById('globalForensicLoader');
+            const progressFill = document.getElementById('globalProgressFill');
+            const progressPercent = document.getElementById('globalProgressPercent');
+            const statusText = document.getElementById('globalStatusText');
+            
+            if (!loader) return;
+            loader.style.display = 'flex';
+
+            const statuses = [
+                { text: "Initializing Local Armada Core...", p: 5 },
+                { text: "Extracting Forensic Signal Samples (8-point)...", p: 15 },
+                { text: "Auditing Geometric Mesh Integrity...", p: 30 },
+                { text: "Scanning Spectral/Noise Divergence...", p: 45 },
+                { text: "Running Local ViT/CNN Ensemble Audit...", p: 65 },
+                { text: "Checking Biological r-PPG Flow...", p: 80 },
+                { text: "Finalizing Consensus Forensic Verdict...", p: 95 }
+            ];
+
+            let curP = 0;
+            let curS = 0;
+            const timer = setInterval(() => {
+                if (curP < 98) {
+                    curP += (curP < 60) ? 0.4 : 0.15; // Realistic easing
+                    progressFill.style.width = curP + "%";
+                    progressPercent.innerText = Math.floor(curP) + "%";
+                    
+                    if (curS < statuses.length && curP >= statuses[curS].p) {
+                        statusText.style.opacity = 0;
+                        setTimeout(() => {
+                            statusText.innerText = statuses[curS].text;
+                            statusText.style.opacity = 1;
+                            curS++;
+                        }, 400);
+                    }
+                } else {
+                    clearInterval(timer);
+                }
+            }, 80);
+        };
+
+        // Intercept ONLY heavy forensic forms
+        document.addEventListener('submit', (e) => {
+            if (e.target.classList && e.target.classList.contains('forensic-form')) {
+                startForensicScan();
+            }
+        });
     </script>
+
+    <!-- Global Forensic Progress HUD -->
+    <div id="globalForensicLoader" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 10, 0.98); backdrop-filter: blur(25px); z-index: 99999; flex-direction: column; align-items: center; justify-content: center; color: white;">
+        <div style="position: relative; width: 220px; height: 220px; margin-bottom: 50px;">
+            <div style="position: absolute; width: 100%; height: 100%; border: 1px solid rgba(0, 240, 255, 0.1); border-radius: 50%;"></div>
+            <div style="position: absolute; width: 100%; height: 100%; border: 4px solid transparent; border-top-color: var(--accent-cyan); border-radius: 50%; animation: spinHUD 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;"></div>
+            <div style="position: absolute; width: 100%; height: 100%; border: 4px solid transparent; border-bottom-color: var(--accent-magenta); border-radius: 50%; animation: spinHUD 3s cubic-bezier(0.4, 0, 0.2, 1) infinite reverse; opacity: 0.4;"></div>
+            
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                <div id="globalProgressPercent" style="font-size: 2.8em; font-weight: 900; font-family: 'Space Grotesk', sans-serif; background: linear-gradient(to bottom, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">0%</div>
+                <div style="font-size: 0.65em; letter-spacing: 5px; color: var(--accent-cyan); text-transform: uppercase; margin-top: -5px; font-weight: 800;">Forensics</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; width: 100%; max-width: 500px; padding: 0 40px;">
+            <div style="font-family: 'Space Grotesk', sans-serif; font-size: 0.7em; letter-spacing: 3px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 20px;">[ Full Local Armada Mode ]</div>
+            <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 24px; position: relative;">
+                <div id="globalProgressFill" style="position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta)); box-shadow: 0 0 25px var(--glow-cyan); transition: width 0.1s linear;">
+                    <div style="position: absolute; right: 0; top: 50%; transform: translate(50%, -50%); width: 12px; height: 12px; background: white; border-radius: 50%; box-shadow: 0 0 15px white;"></div>
+                </div>
+            </div>
+            <p id="globalStatusText" style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; color: white; font-size: 1em; transition: opacity 0.4s ease; min-height: 1.5em;">Initializing Forensic Infrastructure...</p>
+        </div>
+        <style>@keyframes spinHUD { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style>
+    </div>
 </body>
 </html>

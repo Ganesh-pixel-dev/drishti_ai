@@ -2,34 +2,30 @@ import cv2
 import os
 import logging
 import json
+import numpy as np
 from PIL import Image
-from image_module.ai_model import predict_image, get_api_key
-import statistics
+from image_module.utils import run_full_analysis
+from .detectors import analyze_temporal_noise, analyze_optical_flow, detect_temporal_jitter, detect_heartbeat
 
 logger = logging.getLogger(__name__)
 
-MAX_SAMPLE_FRAMES = 12 
+MAX_SAMPLE_FRAMES = 8 # Reduced samples for deeper local analysis per frame
 
 def check_video_metadata(video_path):
-    """
-    Scans the binary header of a video file for common camera manufacturer strings.
-    A poor-man's ffprobe to distinguish real hardware from generic AI output.
-    """
     brands = [b"Apple", b"Samsung", b"Sony", b"Nikon", b"Canon", b"GoPro", b"DJI", b"Xiaomi", b"Google", b"Huawei"]
     try:
         with open(video_path, 'rb') as f:
-            header = f.read(16384) # Read first 16KB
+            header = f.read(16384)
             for brand in brands:
                 if brand in header:
                     return brand.decode()
-    except:
-        pass
+    except: pass
     return None
 
 def evaluate_video_final(video_path, max_duration=60):
     """
-    Extracts keyframes, runs Dual-Model analysis (Gemini + Local Texture),
-    and applies 'Webcam Shield' for generic hardware.
+    Overhauled 'Local-First' Video Forensic Engine.
+    Uses 20+ detectors per frame + temporal video-only detectors.
     """
     if not os.path.exists(video_path):
         return {"error": "Video file not found."}
@@ -37,175 +33,165 @@ def evaluate_video_final(video_path, max_duration=60):
     cap = cv2.VideoCapture(video_path)
     fps = cap.get(cv2.CAP_PROP_FPS)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     duration_secs = total_frames / fps if fps > 0 else 0
 
     if duration_secs <= 0:
         cap.release()
         return {"error": "Could not read video duration."}
 
-    if duration_secs > max_duration:
-        duration_secs = max_duration
-
-    # 1. Extract & Detect Hardware Profile
+    # 1. Hardware Audit
     camera_brand = check_video_metadata(video_path)
-    # Universal Generic Shield: Any source without a brand tag (webcams, desktop recording, etc.)
-    is_webcam = not camera_brand
+    metadata_val = camera_brand or "Generic/Webcam"
     
-    num_samples = min(MAX_SAMPLE_FRAMES, max(4, int(duration_secs)))
+    num_samples = min(MAX_SAMPLE_FRAMES, max(3, int(duration_secs // 2)))
     step = duration_secs / num_samples
     timestamps = [step * i for i in range(num_samples)]
+    
+    # 🧬 PHASE 0: TEMPORAL STABILITY (The 'Supreme Court')
+    # We calculate Jitter FIRST because physics never lies.
+    jitter_score = detect_temporal_jitter(video_path)
 
     frame_paths = []
-    texture_results = []
+    frame_results = []
     
+    # 🧪 PHASE 1: DEEP PER-FRAME FORENSICS (20+ Detectors each)
     for i, ts in enumerate(timestamps):
         frame_id = int(fps * ts)
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
         ret, frame = cap.read()
         if ret:
-            path = os.path.join(os.path.dirname(video_path), f"_vframe_{i}.jpg")
-            cv2.imwrite(path, frame)
-            frame_paths.append((i, ts, path))
+            f_path = os.path.join(os.path.dirname(video_path), f"_vframe_{i}.jpg")
+            cv2.imwrite(f_path, frame)
+            frame_paths.append(f_path)
             
-            try:
-                t_verdict, t_conf, _ = predict_image(path)
-                # In Webcam Mode, we treat very high ISO grain more conservatively
-                texture_results.append({
-                    "frame": i + 1,
-                    "is_ai_texture": "AI" in t_verdict.upper(),
-                    "conf": t_conf
-                })
-            except:
-                texture_results.append({"frame": i + 1, "is_ai_texture": False, "conf": 0})
+            # 🔥 RUN 20+ IMAGE DETECTORS ON THIS FRAME
+            # Now with Physics-Primacy (Jitter) passed down
+            analysis = run_full_analysis(f_path, metadata=metadata_val, jitter=jitter_score)
+            frame_results.append(analysis)
+    
     cap.release()
 
-    if not frame_paths:
-        return {"error": "Could not extract frames."}
+    if not frame_results:
+        return {"error": "Deep analysis failed to process frames."}
 
-    # 2. RUN WEBCAM-AWARE GEMINI AUDIT
-    api_key = get_api_key()
-    gemini_data = {}
-    if api_key:
-        try:
-            from google import genai
-            client = genai.Client(api_key=api_key)
-            contents = []
-            for idx, ts, path in frame_paths:
-                img = Image.open(path).convert("RGB")
-                contents.append(img)
-                contents.append(f"[Frame {idx+1}]")
-
-            # Updated Prompt with Webcam Intelligence
-            prompt = """Analyze these keyframes as a Digital Forensics Expert.
-NOTE: This is LOW-QUALITY footage likely from a WEBCAM.
-1. DO NOT flag sensor noise, 'salt & pepper' grain, or compression blockiness as AI.
-2. DO NOT flag soft facial shadows as AI. These are webcam artifacts.
-3. ONLY flag 'Structural Paradoxes': floating limbs or background morphing.
-Unless you see a definitive physical paradox, verdict must be REAL.
-Respond EXCLUSIVELY in JSON: {"overall_verdict": "DEEPFAKE"|"REAL", "overall_confidence": 0.0-1.0, "analysis_notes": "...", "frames": [{"frame": 1, "verdict": "AI"|"REAL", "confidence": 0.0-1.0, "notes": "..."}]}"""
-            
-            contents.append(prompt)
-            response = client.models.generate_content(model='gemini-2.5-flash', contents=contents)
-            gemini_data = json.loads(response.text.strip().replace("```json", "").replace("```", "").strip())
-        except Exception as e:
-            logger.warning(f"Gemini failed: {e}")
-
-    # 3. AGGREGATED ANALYSIS (The "Webcam Shield" Consensus)
-    timeline = []
-    gemini_frames = {f['frame']: f for f in gemini_data.get('frames', [])}
+    # 🧬 PHASE 2: REMAINING TEMPORAL DETECTORS
+    noise_result = analyze_temporal_noise(video_path, jitter=jitter_score)
+    flow_result = analyze_optical_flow(video_path)
     
-    ai_texture_votes = 0
-    ai_vision_votes = 0
-    total_analyzed = len(frame_paths)
+    # HEAVY ARMOUR: BIOLOGICAL PULSE SCAN
+    from .detectors.heartbeat_detector import detect_heartbeat
+    from .detectors.blink_consistency import analyze_blink_consistency
+    from .detectors.landmark_jitter import analyze_landmark_jitter
+    from .detectors.spectral_fingerprint import analyze_spectral_fingerprint
+    
+    heart_result = detect_heartbeat(video_path)
+    heart_score = heart_result.get("score", 0.0)
+    
+    blink_result = analyze_blink_consistency(video_path)
+    blink_score = blink_result.get("score", 0.0)
+    
+    volume_result = analyze_landmark_jitter(video_path)
+    volume_score = volume_result.get("score", 0.0)
+    
+    spectral_result = analyze_spectral_fingerprint(video_path)
+    spectral_score = spectral_result.get("score", 0.0)
 
-    ov_gemini = gemini_data.get("overall_verdict", "").upper()
-    oc_gemini = float(gemini_data.get("overall_confidence", 0.0))
-    is_vision_solid_real = ("REAL" in ov_gemini) and oc_gemini > 0.8
-
-    for i in range(total_analyzed):
-        frame_idx = i + 1
-        g = gemini_frames.get(frame_idx, {"verdict": "UNKNOWN", "confidence": 0.0, "notes": ""})
-        t = texture_results[i]
+    # 🧠 PHASE 3: MULTI-LEVEL CONSENSUS
+    timeline = []
+    total_ai_votes = 0
+    total_suspicious_votes = 0
+    
+    for i, res in enumerate(frame_results):
+        v = res.get("verdict", "")
+        is_ai = "AI" in v or "Forged" in v
+        is_suspicious = "Suspicious" in v
         
-        # WEBCAM SHIELD FORCE-FIELD:
-        # We increase the bar for the Texture model if we know it's a webcam
-        texture_cap = 0.98 if is_webcam else 0.88
+        if is_ai: total_ai_votes += 1
+        if is_suspicious: total_suspicious_votes += 1
         
-        vision_says_ai = "AI" in g['verdict'].upper() and g['confidence'] > 0.9
-        texture_says_ai = t['is_ai_texture'] and t['conf'] > texture_cap
-        
-        if vision_says_ai: ai_vision_votes += 1
-        if texture_says_ai: ai_texture_votes += 1
-
         timeline.append({
-            "sec": frame_idx,
-            "verdict": "AI" if (vision_says_ai or texture_says_ai) else "Real",
-            "vision_conf": round(g['confidence'] * 100, 1),
-            "texture_conf": round(t['conf'] * 100, 1),
-            "note": g['notes'] if vision_says_ai else ("Texture Anomaly" if texture_says_ai else "Clean Math")
+            "sec": round(timestamps[i], 1),
+            "verdict": v,
+            "confidence": res.get("confidence", 0.0),
+            "note": res['explanation'][0] if res['explanation'] else "Scan Complete"
         })
 
-    # --- FINAL VERDICT (CALIBRATED) ---
-    precision_vision = ai_vision_votes / total_analyzed
-    precision_texture = ai_texture_votes / total_analyzed
-
-    from .detectors import detect_temporal_jitter
-    jitter_score = detect_temporal_jitter(video_path, samples=20)
-
-    overall_verdict = "Likely Authentic"
-    diagnostic_notes = []
-
-    # THE ATOMIC PRECISION OVERRIDE:
-    # If the system identifies a webcam/generic source AND the visual audit (Gemini) 
-    # finds ZERO structural evidence of AI, we MUST ignore the texture math entirely.
-    if is_webcam and precision_vision < 0.2:
-        precision_texture = 0.0
-        overall_verdict = "AUTHENTIC (Webcam Shield Enabled)"
-        diagnostic_notes.append("Shield: Web/Generic sensor optimization active.")
-        # SYNC TIMELINE: Ensure all frames match the authentic decision
-        for item in timeline:
-            item["verdict"] = "Real"
-            item["note"] = "Webcam Artifact Filtered"
+    # FINAL AGGREGATION
+    ai_ratio = total_ai_votes / len(frame_results)
+    suspicious_ratio = (total_ai_votes + total_suspicious_votes) / len(frame_results)
+    
+    # WEBCAM-RESISTANT AGGRESSIVE WEIGHTING
+    # Temporal Noise and Jitter are the hardest for AI to hide.
+    # [ARMADA v4] ABSOLUTE BIOLOGICAL SILENCE:
+    # Webcams almost always fail heartbeat scans. We now ignore this entirely.
+    heart_weight = 0.2
+    if metadata_val == "Generic/Webcam":
+        heart_weight = 0.0
+        heart_score = 0.0 # Force zero for webcams
+    
+    temporal_score = (
+        (jitter_score * 0.45) + 
+        (noise_result['score'] * 0.45) + 
+        (flow_result['score'] * 0.10) + 
+        (heart_score * heart_weight)
+    )
+    
+    # MAJOR ANOMALY OVERDRIVE
+    # If any single video-detector is screaming 'AI' (> 0.45), we boost the final score.
+    # CRITICAL FIX: Ignore Heartbeat Void for Overdrive if it's a Generic/Webcam.
+    if metadata_val == "Generic/Webcam":
+        max_detector_anomaly = max(jitter_score, noise_result['score'], blink_score, volume_score, spectral_score)
     else:
-        # Standard consensus logic
-        consensus_trigger = 0.55 if is_webcam else 0.25
-        
-        if precision_vision >= consensus_trigger and precision_texture >= consensus_trigger:
-            overall_verdict = "Highly Likely Deepfake (Consensus Identified)"
-            diagnostic_notes.append("Dual-model verification confirmed AI origin.")
-        elif precision_texture > 0.85 and not is_vision_solid_real:
-            overall_verdict = "Highly Likely Deepfake (Texture Anomaly)"
-            diagnostic_notes.append("Mathematical noise patterns match AI diffusion.")
-        elif precision_vision > 0.4:
-            overall_verdict = "Highly Likely Deepfake (Visual Anomaly)"
-            diagnostic_notes.append("Major physical inconsistencies detected.")
-        elif (precision_vision > 0.2 or precision_texture > 0.2) and not is_webcam:
-            overall_verdict = "Suspicious (Inconsistent Markers)"
-            diagnostic_notes.append("Forensic anomalies detected.")
+        max_detector_anomaly = max(jitter_score, noise_result['score'], heart_score, blink_score, volume_score, spectral_score)
+    
+    if max_detector_anomaly > 0.45:
+        temporal_score = max(temporal_score, max_detector_anomaly)
+    
+    # Decide Verdict based on Consensus
+    # [ARMADA v4] Final Surgical Wedge calibration
+    # Deepfakes rarely trigger 100% frame failure on stable shots. 
+    # If even 30% of the frames scream AI, it's a Deepfake.
+    ai_threshold = 0.30 
+    
+    if ai_ratio >= ai_threshold or temporal_score > 0.65:
+        overall_verdict = f"Highly Likely Deepfake (Consensus AI Ratio: {ai_ratio*100:.0f}%)"
+        final_conf = max(ai_ratio, temporal_score)
+    elif suspicious_ratio > 0.40 or temporal_score > 0.40 or ai_ratio > 0.10:
+        overall_verdict = "Suspicious (Inconsistent Forensic Markers)"
+        final_conf = max(suspicious_ratio, temporal_score, ai_ratio)
+    else:
+        overall_verdict = "Likely Authentic"
+        if camera_brand: overall_verdict = "AUTHENTIC (Verified Hardware Signature)"
+        final_conf = 1.0 - max(ai_ratio, temporal_score)
 
-    if camera_brand:
-        diagnostic_notes.append(f"Header: Valid {camera_brand} signature.")
+    if blink_score > 0.8: overall_verdict += " [True Sight: Reptilian Gaze]"
+    if volume_score > 0.7: overall_verdict += " [True Sight: Volume Morphing]"
+    if spectral_score > 0.8: overall_verdict += " [True Sight: Generative Pulse]"
 
     # Cleanup
-    for _, _, path in frame_paths:
-        try: os.remove(path)
+    for p in frame_paths:
+        try: os.remove(p)
         except: pass
 
-    notes = gemini_data.get("analysis_notes", "Forensic check complete.")
-    if diagnostic_notes: notes = " | ".join(diagnostic_notes) + " -- " + notes
+    notes = [
+        f"Temporal Jitter: {jitter_score:.2f}", 
+        f"Noise Consist: {noise_result['score']:.2f}", 
+        f"Biological Void: {heart_score:.2f}",
+        f"Flow Divergence: {flow_result['score']:.2f}",
+        f"Blink Anomaly: {blink_score:.2f}",
+        f"Volume Jitter: {volume_score:.2f}",
+        f"Spectral Spike: {spectral_score:.2f}"
+    ]
+    if camera_brand: notes.append(f"Header: {camera_brand}")
 
     return {
         "verdict": overall_verdict,
-        "shield_token": "", # Cleaned for production
-        "ai_ratio_percent": round(max(precision_vision, precision_texture) * 100, 2),
-        "avg_confidence": round(oc_gemini * 100, 2),
-        "texture_confidence": round(precision_texture * 100, 2),
+        "ai_ratio_percent": round(ai_ratio * 100, 2),
+        "avg_confidence": round(final_conf * 100, 2),
         "jitter_score": jitter_score,
         "duration": round(duration_secs, 1),
-        "frames_analyzed": total_analyzed,
+        "frames_analyzed": len(frame_results),
         "timeline": timeline,
-        "notes": notes,
-        "metadata": camera_brand or ("Webcam/Generic" if is_webcam else "Generic/No Signature")
+        "notes": " | ".join(notes),
+        "metadata": camera_brand or "Generic/Webcam"
     }

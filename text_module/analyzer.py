@@ -3,7 +3,6 @@ import json
 import re
 import math
 from collections import Counter
-from image_module.ai_model import get_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -235,78 +234,14 @@ def _local_heuristic_check(text):
 
 
 def analyze_text(text_content):
-    """
-    Analyzes text to determine if it was written by AI.
-    Uses Gemini as primary, local heuristics as fallback.
-    """
-    results = {
-        "is_ai": False,
-        "ai_confidence": 0.0,
-        "explanation": "",
-        "plagiarism_found": False,
-        "plagiarism_sources": [],
-        "plagiarism_message": "",
-        "method": "unknown"
-    }
-
-    # 1. Try Gemini API first
-    gemini_worked = False
-    try:
-        api_key = get_api_key()
-        if api_key:
-            from google import genai
-            client = genai.Client(api_key=api_key)
-            
-            prompt = f"""You are an elite linguistic forensics expert. Determine if this text was written by a human or by an AI model (ChatGPT, Claude, Gemini).
-
-CRITICAL AI TELLS to look for:
-- Overly balanced, symmetrical structures
-- Robotic transitions ("Furthermore", "Moreover", "In conclusion")
-- Modern coaching/motivational tone ("the truth is", "most people", "your biggest gap", "consistent action")
-- Run-on compound sentences joined by semicolons and em-dashes
-- Heavy use of "you/your" in a generic motivational way
-- Perfect grammar with no real personality or lived experience
-- Generic wisdom that sounds deep but says nothing specific
-
-Be careful! Do not automatically flag highly formal, academic, or encyclopedic text (like Wikipedia) as AI. Humans can write with perfect grammar and neutral tones too. Look deeper for the generic "slop" and repetitive structures unique to LLMs before crying "AI".
-
-TEXT:
----
-{text_content}
----
-
-Respond ONLY with JSON:
-{{"verdict": "AI-WRITTEN", "confidence": 0.92, "reason": "..."}}
-or
-{{"verdict": "HUMAN-WRITTEN", "confidence": 0.85, "reason": "..."}}"""
-
-            response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=prompt
-            )
-            
-            raw_text = response.text.strip().replace("```json", "").replace("```", "").strip()
-            data = json.loads(raw_text)
-            
-            v = data.get("verdict", "").upper()
-            c = float(data.get("confidence", 0.0))
-            
-            results["is_ai"] = "AI" in v
-            results["ai_confidence"] = round(c * 100, 1)
-            results["explanation"] = data.get("reason", "No explanation provided.")
-            results["method"] = "Gemini AI (Primary)"
-            gemini_worked = True
-                
-    except Exception as e:
-        logger.warning(f"Gemini text analysis failed: {e}. Using local heuristics.")
-
-    # 2. Fallback: Local Heuristic Analysis (always works, no API needed)
-    if not gemini_worked:
-        is_ai, score, reason = _local_heuristic_check(text_content)
-        results["is_ai"] = is_ai
-        results["ai_confidence"] = round(score * 100, 1)
-        results["explanation"] = reason
-        results["method"] = "Local Heuristic Engine (Offline Fallback)"
+    results = {}
+    # [LOCAL ARMADA] Heuristic Analysis is now PRIMARY.
+    # Cloud dependencies (Gemini) have been removed for 100% privacy.
+    is_ai, score, reason = _local_heuristic_check(text_content)
+    results["is_ai"] = is_ai
+    results["ai_confidence"] = round(score * 100, 1)
+    results["explanation"] = reason
+    results["method"] = "Local Heuristic Engine (100% Private)"
 
     # 3. Live Web Plagiarism Search 
     import os

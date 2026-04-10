@@ -32,7 +32,7 @@
         </div>
     </div>
 
-    <form method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; flex: 1;">
+    <form method="POST" enctype="multipart/form-data" class="forensic-form" style="display: flex; flex-direction: column; flex: 1;">
         {% csrf_token %}
         <div id="dropzone" style="border: 2px dashed var(--border-medium); padding: 48px 20px; border-radius: 14px; background: var(--bg-elevated); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; text-align: center;">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 16px; display: block;">
@@ -216,44 +216,28 @@
     <!-- Verdict -->
     <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0;">
         <div class="verdict-card {% if 'AI' in ai_result or 'Suspicious' in verdict or 'Forged' in verdict %}danger{% else %}success{% endif %}">
-            {% if 'AI-Generated' in verdict or 'AI' in ai_result %}
-                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; margin-bottom: 16px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                        <line x1="12" y1="9" x2="12" y2="13"></line>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                    </svg>
-                    <span style="color: var(--accent-red); font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">AI Detected</span>
-                </div>
-                <h1 style="font-size: 2em; margin-bottom: 12px; color: var(--accent-red);">AI-Generated Content</h1>
-                <p style="color: var(--text-secondary); line-height: 1.6;">This image exhibits characteristics consistent with AI synthesis using generative models such as GANs or diffusion networks.</p>
-            {% elif 'Forged' in verdict or 'Suspicious' in verdict %}
-                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; margin-bottom: 16px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="15" y1="9" x2="9" y2="15"></line>
-                        <line x1="9" y1="9" x2="15" y2="15"></line>
-                    </svg>
-                    <span style="color: var(--accent-red); font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Manipulation Detected</span>
-                </div>
-                <h1 style="font-size: 2em; margin-bottom: 12px; color: var(--accent-red);">Image Manipulation</h1>
-                <p style="color: var(--text-secondary); line-height: 1.6;">Analysis reveals evidence of digital editing with inconsistent compression artifacts indicating localized alterations.</p>
-                {% if edited_region %}
-                    <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 16px; margin-top: 20px;">
-                        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9em;"><strong style="color: var(--accent-red);">Anomalous Region:</strong> {{ edited_region }}</p>
+            <div style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                {% if 'AI' in verdict or 'AI' in ai_result or 'Suspicious' in verdict or 'Forged' in verdict or 'Deepfake' in verdict %}
+                    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; margin-bottom: 24px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2.5">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        </svg>
+                        <span style="color: var(--accent-red); font-weight: 800; font-size: 1em; text-transform: uppercase; letter-spacing: 1px;">Forensic Alert</span>
                     </div>
+                    <h1 style="font-size: 3.5em; margin-bottom: 16px; color: var(--accent-red); font-family: 'Space Grotesk', sans-serif; font-weight: 800; text-transform: uppercase;">AI GENERATED</h1>
+                    <p style="color: var(--text-secondary); font-size: 1.1em;">Synthetic patterns or digital manipulations discovered in the forensic texture audit.</p>
+                {% else %}
+                    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; margin-bottom: 24px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2.5">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span style="color: var(--accent-green); font-weight: 800; font-size: 1em; text-transform: uppercase; letter-spacing: 1px;">Verified Authentic</span>
+                    </div>
+                    <h1 style="font-size: 3.5em; margin-bottom: 16px; color: var(--accent-green); font-family: 'Space Grotesk', sans-serif; font-weight: 800; text-transform: uppercase;">REAL CONTENT</h1>
+                    <p style="color: var(--text-secondary); font-size: 1.1em;">No artificial artifacts found. Content matches physical light transport and sensor noise standards.</p>
                 {% endif %}
-            {% else %}
-                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; margin-bottom: 16px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
-                    <span style="color: var(--accent-green); font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Verified Authentic</span>
-                </div>
-                <h1 style="font-size: 2em; margin-bottom: 12px; color: var(--accent-green);">Authentic Image</h1>
-                <p style="color: var(--text-secondary); line-height: 1.6;">No evidence of AI synthesis or digital manipulation detected. Image appears to be genuine photographic content.</p>
-            {% endif %}
+            </div>
         </div>
 
         {% if ela_url and not 'AI' in ai_result %}

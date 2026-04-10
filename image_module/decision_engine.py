@@ -1,71 +1,144 @@
-def analyze_results(results):
+def analyze_results(results, metadata="Generic", jitter=1.0):
+    """
+    Consolidates 20+ detectors into a single forensic verdict using weighted voting.
+    Physics-Primacy: Jitter (temporal stability) acts as a high-level arbitrator.
+    """
+    explanation = []
+    # Heuristics
     ela = results.get("ela", {}).get("score", 0.0)
     noise = results.get("noise", {}).get("score", 0.0)
     freq = results.get("frequency", {}).get("score", 0.0)
     patch = results.get("patch", {}).get("score", 0.0)
     
+    # New Armour Detectors
+    lum = results.get("luminance", {}).get("score", 0.0)
+    median = results.get("median", {}).get("score", 0.0)
+    hist = results.get("histogram", {}).get("score", 0.0)
+    cfa = results.get("cfa", {}).get("score", 0.0)
+    wavelet = results.get("wavelet", {}).get("score", 0.0)
+    comp = results.get("compression", {}).get("score", 0.0)
+    exif = results.get("exif", {}).get("score", 0.0)
+    reflect = results.get("reflection", {}).get("score", 0.0)
+    adv = results.get("adversarial", {}).get("score", 0.0)
+    heart = results.get("heartbeat", {}).get("score", 0.0)
+    heart = results.get("heartbeat", {}).get("score", 0.0)
+    geom = results.get("geometric", {}).get("score", 0.0)
+    boundary = results.get("boundary", {}).get("score", 0.0)
+    
+    # AI Core (Gemini/Local ML)
     ai_core = results.get("ai_core", {})
     ai_verdict_str = ai_core.get("verdict", "Unknown")
     ai_confidence = ai_core.get("confidence", 0.0)
     edited_region = ai_core.get("edited_region", None)
 
-    # Weighted heuristic score (ELA and noise are most important for splices)
-    heuristic_score = (ela * 0.35) + (noise * 0.30) + (freq * 0.20) + (patch * 0.15)
-    
-    # === DECISION ROUTING ===
-    
-    # 1. AI-Generated detection (Gemini/HF model says AI)
-    if ai_verdict_str == "AI-generated" and ai_confidence > 0.70:
-        verdict = "Highly Likely AI-Generated"
-        final_score = ai_confidence
-    
-    # 2. Photoshop/Splice detection (heuristics catch face swaps, copy-paste)
-    elif heuristic_score > 0.35:
-        verdict = "Highly Likely Forged (Edited/Spliced)"
-        final_score = heuristic_score
-    
-    # 3. Moderate AI suspicion
-    elif ai_verdict_str == "AI-generated" and ai_confidence > 0.50:
-        verdict = "Suspicious (Possible AI or Heavy Editing)"
-        final_score = max(ai_confidence, heuristic_score)
-    
-    # 4. Moderate heuristic suspicion
-    elif heuristic_score > 0.20:
-        verdict = "Suspicious (Possible Editing Detected)"
-        final_score = heuristic_score
-    
-    # 5. Low-confidence AI model — don't trust blindly
-    elif ai_verdict_str == "Likely Real" and ai_confidence < 0.65:
-        verdict = "Suspicious (Low Confidence — Manual Review Recommended)"
-        final_score = ai_confidence
-    
-    # 6. Clean bill of health
-    else:
-        verdict = "Likely Authentic"
-        if ai_verdict_str == "Likely Real":
-            final_score = ai_confidence
-        else:
-            final_score = max(1.0 - heuristic_score, 0.5)
+    # Removed Armada v3 Adaptive Neural Dampening (Flawed premise: Deepfakes have low jitter, so this blinded the AI)
 
-    # Build Explanation
-    explanation = []
+    # --- WEIGHTED FORENSIC SCORE ---
+    # We prioritize signal-processing (CFA, DQ, ELA) as they are hardest to fake.
+    weights = {
+        "cfa": 0.20,      # Sensor artifacts
+        "comp": 0.15,     # Compression anomalies
+        "ela": 0.15,      # Error level
+        "noise": 0.10,    # Noise variance
+        "median": 0.08,   # Smoothing detection
+        "wavelet": 0.08,  # High-freq stats
+        "lum": 0.05,      # Lighting
+        "hist": 0.05,     # Color anomaly
+        "patch": 0.05,    # Copy-move
+        "freq": 0.04,     # Global freq
+        "reflect": 0.05,  # Eye reflections
+        "adv": 0.05,      # Adversarial noise
+        "geom": 0.15      # Geometric integrity (New Lead)
+    }
     
-    if edited_region:
-        explanation.insert(0, f"Specific region flagged as manipulated: {edited_region}")
-
-    if ai_verdict_str == "AI-generated" and ai_confidence > 0.7:
-        explanation.append("AI model detected synthetic generation artifacts.")
-    if ela > 0.35:
-        explanation.append(f"ELA detected compression inconsistencies (score: {ela:.2f}) — possible splice/edit.")
-    if noise > 0.25:
-        explanation.append(f"Noise analysis found regional inconsistencies (score: {noise:.2f}) — possible pasted region.")
-    if freq > 0.5:
-        explanation.append("Unnatural frequency/pixel distribution patterns.")
-    if patch > 0.01:
-        explanation.append("Repeated regions detected (Copy-Move).")
+    # --- PHYSICS-FIRST CALIBRATION (Webcam Shield v2) ---
+    # If Jitter is extremely low (< 0.05), it strongly suggests a real physical lens.
+    # In this state, we lower the 'burden of proof' for texture-based sensors.
+    if jitter < 0.05 and metadata == "Generic/Webcam":
+        cfa *= 0.4    # Webcam grain looks like CFA patterns
+        noise *= 0.4  # Webcam noise looks like GAN noise
+        ela *= 0.5    # Webcam denoising looks like ELA
+        explanation.append("Safety: High lens stability detected. Reducing texture-sensor sensitivity.")
+    
+    heuristic_score = (
+        (cfa * weights["cfa"]) +
+        (comp * weights["comp"]) +
+        (ela * weights["ela"]) +
+        (noise * weights["noise"]) +
+        (median * weights["median"]) +
+        (wavelet * weights["wavelet"]) +
+        (lum * weights["lum"]) +
+        (hist * weights["hist"]) +
+        (patch * weights["patch"]) +
+        (freq * weights["freq"]) +
+        (reflect * weights["reflect"]) +
+        (adv * weights["adv"]) +
+        (geom * weights["geom"])
+    )
+    
+    # HEAVY ARMOUR: BIOLOGICAL OVERRIDE (Absence as Evidence)
+    if heart > 0.8:
+        # ABSENCE AS EVIDENCE:
+        # But for webcams, we are more lenient if Vision is perfect.
+        if metadata == "Generic/Webcam" and ai_verdict_str == "Likely Real" and ai_confidence > 0.95:
+            explanation.append("Note: Biological scan limited by sensor quality. Vision consensus overrides void.")
+            heart = 0.2 # Downgrade from flag to minor note
         
+        heuristic_score = max(heuristic_score, heart)
+    
+    # Final Decision Routing
+    final_score = heuristic_score
+    
+    # --- ZERO TOLERANCE ARMOUR ---
+    # We NO LONGER subtract confidence for 'Likely Real' because AI models are easily fooled.
+    # Scientific sensor anomalies (CFA, Noise, BAG) now stand on their own.
+    
+    verdict = "Likely Authentic"
+    
+    # AI model override if very high confidence
+    # AI model override if very high confidence
+    # If Physics is 'Real' but AI is 'AI', we flag for Review instead of AI-Generated.
+    if ai_verdict_str == "AI-generated" and ai_confidence > 0.85:
+        if jitter < 0.05 and metadata == "Generic/Webcam":
+            verdict = "Review Required (Visual-Temporal Conflict)"
+            final_score = 0.25 # Suspicious
+            if jitter < 0.03: # Supreme Court Jitter
+                verdict = "Likely Authentic (Stability High)"
+                final_score = 0.15 # Below suspicious
+        else:
+            verdict = "Highly Likely AI-Generated (Visual + Local)"
+            final_score = max(ai_confidence, final_score)
+    # True Sight Anomaly Override Mode
+    if boundary > 0.65:
+        verdict = "Highly Likely Forged (Jawline Seam Detection)"
+        final_score = max(boundary, final_score)
+        
+    elif final_score > 0.50:
+        verdict = "Highly Likely Forged (Multi-Detector Consensus)"
+    elif final_score > 0.35 or (ai_verdict_str == "AI-generated" and ai_confidence > 0.60): 
+        verdict = "Suspicious (Inconsistent Forensic Markers)"
+    elif exif > 0.7:
+        verdict = "Suspicious (Metadata/Software Artifacts)"
+        final_score = max(exif, final_score)
+
+    # Explanation Builder
+    if edited_region: explanation.append(f"Region flagged: {edited_region}")
+    if cfa > 0.5: explanation.append("Sensor-level CFA pattern inconsistencies detected.")
+    if heart > 0.8 and metadata != "Generic/Webcam": explanation.append("Biological Void: No heartbeat detected in visible face.")
+    if reflect > 0.6: explanation.append("Geometric Paradox: Impossible eye reflections detected.")
+    if boundary > 0.4: explanation.append("Morph Seam: Unnatural blending detected along the facial jawline boundary.")
+    if comp > 0.6: explanation.append("JPEG block artifact misalignment found (BAG anomaly).")
+    if ela > 0.4: explanation.append("Inconsistent compression levels across regions (ELA).")
+    if geom > 0.5: explanation.append("Geometric Anomaly: Face-mesh warping or artificial symmetry detected.")
+    if median > 0.7: explanation.append("Trace of non-linear median filtering discovered.")
+    if wavelet > 0.6: explanation.append("Statistical high-frequency noise anomalies identified.")
+    if lum > 0.6: explanation.append("Lighting/Luminance gradient contradictions detected.")
+    
     if not explanation:
-        explanation.append("No significant manipulation detected.")
+        if verdict == "Likely Authentic":
+            explanation.append("All 20+ local forensic tests passed.")
+        else:
+            explanation.append("Minor forensic traces detected.")
 
     return {
         "verdict": verdict,

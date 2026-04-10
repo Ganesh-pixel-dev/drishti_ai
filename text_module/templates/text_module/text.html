@@ -26,7 +26,7 @@
         </div>
     </div>
 
-    <form method="POST" style="margin-top: 0;">
+    <form method="POST" class="forensic-form" style="margin-top: 0;">
         {% csrf_token %}
         
         <div style="position: relative;">
@@ -201,8 +201,8 @@
                     </svg>
                     <span style="color: var(--accent-red); font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">AI Detected</span>
                 </div>
-                <h1 style="font-size: 2em; margin-bottom: 12px; color: var(--accent-red);">AI-Generated Text</h1>
-                <p style="color: var(--text-secondary); line-height: 1.6;">This text exhibits low perplexity and high predictability patterns consistent with large language model generation.</p>
+                <h1 style="font-size: 3.5em; margin-bottom: 16px; color: var(--accent-red); font-family: 'Space Grotesk', sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: -1px;">AI GENERATED</h1>
+                <p style="color: var(--text-secondary); line-height: 1.6; font-size: 1.1em;">This text exhibits low perplexity and high predictability patterns consistent with large language model generation.</p>
             {% else %}
                 <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; margin-bottom: 16px;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -211,8 +211,8 @@
                     </svg>
                     <span style="color: var(--accent-green); font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px;">Human Authored</span>
                 </div>
-                <h1 style="font-size: 2em; margin-bottom: 12px; color: var(--accent-green);">Human-Written Content</h1>
-                <p style="color: var(--text-secondary); line-height: 1.6;">The text demonstrates natural variation and burstiness characteristic of human composition and creative expression.</p>
+                <h1 style="font-size: 3.5em; margin-bottom: 16px; color: var(--accent-green); font-family: 'Space Grotesk', sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: -1px;">REAL CONTENT</h1>
+                <p style="color: var(--text-secondary); line-height: 1.6; font-size: 1.1em;">The text demonstrates natural variation and burstiness characteristic of human composition and creative expression.</p>
             {% endif %}
 
             <div style="background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; margin-top: 24px;">
