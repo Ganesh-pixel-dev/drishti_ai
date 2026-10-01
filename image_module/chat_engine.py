@@ -16,75 +16,87 @@ FORENSIC_DB = {
     "jitter": "Temporal Jitter analysis identifies non-rigid structural morphing. While real human heads are stable physical objects, deepfake faces often 'breathe' or subtlely warp.",
     "kurtosis": "Histogram Kurtosis measures the distribution of pixel intensities. Diffusion models often create 'super-flat' or 'clipped' histograms that are statistically impossible in nature.",
     "geometric": "Geometric Paradox detection looks for impossible facial symmetry or iris reflections that don't match the environment's light source.",
-    "boundary": "Face Boundary analysis looks for the jawline seam where an AI face-swap mask is blended. High color-temperature mismatch along this curve is a definitive 'Skin Graft' flag."
+    "boundary": "Face Boundary analysis looks for the jawline seam where an AI face-swap mask is blended. High color-temperature mismatch along this curve is a definitive 'Skin Graft' flag.",
+    "temporal noise": "Temporal Noise is the microscopic continuous film-grain of a video sensor. AI generators struggle to keep this stable, usually causing 'frozen grain' or wildly erratic pixel static between frames.",
+    "texture": "Texture fidelity measures the micro-contrast of a surface (like skin pores). AI smoothing often obliterates high-frequency texture data, returning mathematically 'flat' surfaces."
 }
+
+def parse_context(context_string):
+    """Safely extracts dictionary from session string."""
+    if isinstance(context_string, str):
+        try:
+            return json.loads(context_string)
+        except:
+            return {}
+    if isinstance(context_string, dict):
+        return context_string
+    return {}
 
 def generate_chat_response(prompt, image_path, context_data):
     """
     [LOCAL ARMADA] Narrative Forensic Specialist.
     Converts raw mathematical forensic signals into expert investigative reports.
-    100% Local. No Cloud Dependencies.
+    100% Local. Enhanced Regex NLP Engine. No Cloud Dependencies.
     """
     try:
         p = prompt.lower()
         
-        # 🧪 1. DICTIONARY LOOKUP (Works even without analysis)
-        for term, definition in FORENSIC_DB.items():
-            if term in p:
-                return f"Detective Drishti (Expert Mode): {definition}"
+        # Unpack Context State
+        ctx = parse_context(context_data)
+        verdict = ctx.get("verdict", "No evidence analyzed")
+        explanation = ctx.get("explanation", ctx.get("explanations", []))
+        notes = ctx.get("notes", "")
+        conf = ctx.get("confidence", ctx.get("avg_confidence", 0.0))
+        is_edited = "AI" in verdict or "Edited" in verdict
 
-        # --- CONTEXT SAFETY SHIELD ---
-        # If context_data is a JSON string from the session, unpack it
-        if isinstance(context_data, str):
-            try:
-                context_data = json.loads(context_data)
-            except:
-                context_data = {}
-        
-        if not isinstance(context_data, dict):
-            context_data = {}
+        # 🧪 1. GREETINGS & IDENTITY
+        if re.search(r'\b(hello|hi|hey|howdy|greetings|who are you|what are you|are you ai)\b', p):
+            return "Detective Drishti: Greetings. I am the Drishti AI Forensic Specialist—a 100% localized, offline diagnostic engine designed to interpret raw forensic data. How can I assist your investigation?"
 
-        verdict = context_data.get("verdict", "Unknown")
-        explanation = context_data.get("explanation", context_data.get("explanations", []))
-        notes = context_data.get("notes", "")
-        # --- END SHIELD ---
-
-        # 🧪 2. WHY FLAG (The Correlation Logic)
-        if any(w in p for w in ["why", "flag", "reason", "investigate"]):
-            if not explanation:
-                return "Detective Drishti: No forensic red flags were detected. The image clears all 20+ local signal processing layers with high confidence."
+        # 🧪 2. WHY FLAG / JUSTIFICATION
+        if re.search(r'\b(why|reason|how do you know|fake|real|flagged|explain the result|what is wrong)\b', p):
+            if not is_edited:
+                return f"Detective Drishti: All forensic multi-layered probes passed. I am {conf}% confident this media is Authentic. The temporal consistency and sensor noise patterns behave exactly as expected from physical camera hardware with no signs of digital morphing."
             
-            # Build a correlated report
-            report = f"Detective Drishti: My audit suggests this is {verdict.lower()}. "
+            # Identify it's fake
+            report = f"Detective Drishti: My analysis flagged this as '{verdict}'. "
             
-            # Logic Correlation: Biological + Neural
-            if any("heartbeat" in e.lower() or "biological" in e.lower() for e in explanation):
-                report += "The primary anomaly is a 'Biological Void'—the absence of a human cardiovascular signature despite a visible face. "
+            # Attach evidence based on module
+            if explanation: # Image module typically returns list of explanations
+                if isinstance(explanation, list):
+                    report += f"I detected the following critical anomalies: {', '.join(explanation).lower()}."
+                else:
+                    report += f"Primary anomaly found: {explanation}."
+            elif notes: # Video module typically returns string 'notes'
+                report += f"The temporal engine flagged these metrics: {notes}."
+            else:
+                report += "The primary signal confidence indices fell below the threshold of natural physical physics."
             
-            # Logic Correlation: Signal Artifacts
-            if any(s in notes.lower() for s in ["spectral", "noise", "kurtosis"]):
-                report += "This is corroborated by unnatural spectral spikes in the pixel frequency domain, which are characteristic of generative AI diffusion. "
-            
-            if len(explanation) > 1:
-                report += f"Furthermore, I've identified {explanation[-1].lower()}."
-            
+            report += " These traits are physically impossible for a genuine hardware sensor to produce natively."
             return report
 
-        # 🧪 3. GENERAL TRAGI (The Verdict)
-        if any(w in p for w in ["ai", "fake", "real", "truth", "summary"]):
-            conf = context_data.get("confidence", context_data.get("avg_confidence", 0.0))
-            return f"Detective Drishti: My consolidated audit is complete. I am {conf}% confident that this sample is {verdict}. The decision was reached through a consensus of multi-layered local forensic probes."
+        # 🧪 3. DICTIONARY & JARGON LOOKUP
+        # Matches "what is ELA", "explain jitter", "meaning of cfa"
+        if re.search(r'\b(what is|what does|explain|meaning of|define)\b', p):
+            for term, definition in FORENSIC_DB.items():
+                if term in p:
+                    return f"Detective Drishti (Forensic Lexicon): {definition}"
+            return "Detective Drishti: I detected an inquiry regarding a forensic term, but it is not currently logged in my local Lexicon. My primary diagnostic focuses on noise, compression, frequency, and temporal logic."
 
-        # 🧪 4. HARDWARE AUDIT
-        if any(w in p for w in ["meta", "exif", "hardware", "camera"]):
-            meta = context_data.get("metadata", "Generic/Webcam")
-            return f"Detective Drishti: The hardware signature for this file is '{meta}'. My rules were adaptive-weighted based on this sensor profile."
+        # Fallback exact word match just in case they typed "ela" without "what is"
+        for term, definition in FORENSIC_DB.items():
+            if re.search(rf'\b{term}\b', p):
+                return f"Detective Drishti: {definition}"
 
-        # Default Fallback instructions
+        # 🧪 4. ACTIONABLE / EVIDENCE QUESTIONS
+        if re.search(r'\b(prove|evidence|report|show me|where)\b', p):
+            return "Detective Drishti: You can reference the 'Signal Confidence Indices' on the dashboard UI. For formal investigations, note the specific sensor anomalies flagged in this session and capture a snapshot of any visual heatmaps provided."
+
+        # 🧪 5. DEFAULT FALLBACK
         return ("Detective Drishti: I am your private forensic narrative expert. "
-                "You can ask me technical questions like 'What is ELA?' or 'Explain Spectral Spikes', "
-                "or investigative questions like 'Why did you flag this?'")
+                "You can ask me technical questions like 'What is Temporal Jitter?' or 'Explain ELA', "
+                "or investigative questions like 'Why did you flag this file?'")
         
     except Exception as e:
         logger.error(f"Chat execution error: {e}", exc_info=True)
-        return "Detective Drishti: Forensic data cache currently inaccessible."
+        return "Detective Drishti: Forensic data cache currently inaccessible due to an internal system error."

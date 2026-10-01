@@ -289,7 +289,7 @@ def analyze_text(text_content):
                 logger.error(f"Plagiarism search error: {e}")
                 results["plagiarism_message"] = "Failed to connect to the plagiarism search engine."
         else:
-             results["plagiarism_message"] = "Text is too short or lacks full sentences to run a web plagiarism check."
+            results["plagiarism_message"] = "Text is too short or lacks full sentences to run a web plagiarism check."
     else:
         results["plagiarism_message"] = "Requires SERPER_API_KEY in .env file to enable live web search."
     

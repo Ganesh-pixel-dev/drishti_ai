@@ -89,37 +89,15 @@ def analyze_results(results, metadata="Generic", jitter=1.0):
     # Final Decision Routing
     final_score = heuristic_score
     
-    # --- ZERO TOLERANCE ARMOUR ---
-    # We NO LONGER subtract confidence for 'Likely Real' because AI models are easily fooled.
-    # Scientific sensor anomalies (CFA, Noise, BAG) now stand on their own.
-    
-    verdict = "Likely Authentic"
-    
-    # AI model override if very high confidence
-    # AI model override if very high confidence
-    # If Physics is 'Real' but AI is 'AI', we flag for Review instead of AI-Generated.
-    if ai_verdict_str == "AI-generated" and ai_confidence > 0.85:
-        if jitter < 0.05 and metadata == "Generic/Webcam":
-            verdict = "Review Required (Visual-Temporal Conflict)"
-            final_score = 0.25 # Suspicious
-            if jitter < 0.03: # Supreme Court Jitter
-                verdict = "Likely Authentic (Stability High)"
-                final_score = 0.15 # Below suspicious
-        else:
-            verdict = "Highly Likely AI-Generated (Visual + Local)"
-            final_score = max(ai_confidence, final_score)
-    # True Sight Anomaly Override Mode
-    if boundary > 0.65:
-        verdict = "Highly Likely Forged (Jawline Seam Detection)"
-        final_score = max(boundary, final_score)
-        
-    elif final_score > 0.50:
-        verdict = "Highly Likely Forged (Multi-Detector Consensus)"
-    elif final_score > 0.35 or (ai_verdict_str == "AI-generated" and ai_confidence > 0.60): 
-        verdict = "Suspicious (Inconsistent Forensic Markers)"
-    elif exif > 0.7:
-        verdict = "Suspicious (Metadata/Software Artifacts)"
-        final_score = max(exif, final_score)
+    # [ARMADA v4] Standardized 3-category Verdict System
+    if (ai_verdict_str == "AI-generated" and ai_confidence > 0.85) or final_score > 0.50 or boundary > 0.65:
+        verdict = "Final verdict:- AI generated image"
+        final_score = max(ai_confidence, final_score, boundary)
+    elif final_score > 0.30 or (ai_verdict_str == "AI-generated" and ai_confidence > 0.60) or exif > 0.7 or boundary > 0.4:
+        verdict = "Final verdict:- Edited image"
+        final_score = max(final_score, exif, boundary)
+    else:
+        verdict = "Final verdict:- Real image"
 
     # Explanation Builder
     if edited_region: explanation.append(f"Region flagged: {edited_region}")

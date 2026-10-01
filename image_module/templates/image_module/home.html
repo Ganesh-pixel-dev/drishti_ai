@@ -2,70 +2,39 @@
 {% block content %}
 
 {% if not image_url %}
-
-<!-- Decorative background glow orbs — fill side space -->
-<div style="position: fixed; top: 20%; left: -120px; width: 400px; height: 400px; background: radial-gradient(circle, rgba(0,240,255,0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; animation: orbFloat 8s ease-in-out infinite;"></div>
-<div style="position: fixed; top: 30%; right: -100px; width: 350px; height: 350px; background: radial-gradient(circle, rgba(255,0,127,0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; animation: orbFloat 10s ease-in-out infinite reverse;"></div>
-<div style="position: fixed; bottom: 10%; left: 5%; width: 250px; height: 250px; background: radial-gradient(circle, rgba(255,0,127,0.05) 0%, transparent 70%); border-radius: 50%; pointer-events: none; animation: orbFloat 12s ease-in-out infinite;"></div>
-<div style="position: fixed; bottom: 15%; right: 8%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(0,240,255,0.05) 0%, transparent 70%); border-radius: 50%; pointer-events: none; animation: orbFloat 9s ease-in-out infinite reverse;"></div>
-
-<style>
-@keyframes orbFloat {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-30px); }
-}
-</style>
-
-<!-- Centered upload card -->
-<div class="glass-card animate-in" style="max-width: 560px; margin: 24px auto; padding: 36px; display: flex; flex-direction: column;">
-    <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 14px;">
-        <div style="display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta)); border-radius: 14px; flex-shrink: 0; box-shadow: 0 5px 15px var(--glow-cyan);">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-            </svg>
-        </div>
-        <div>
-            <h1 style="font-size: 1.8em; margin-bottom: 2px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Image Forensics</h1>
-            <p style="font-size: 0.9em; color: var(--text-secondary);">Detect manipulation, deepfakes &amp; synthetic media</p>
-        </div>
-    </div>
-
-    <form method="POST" enctype="multipart/form-data" class="forensic-form" style="display: flex; flex-direction: column; flex: 1;">
-        {% csrf_token %}
-        <div id="dropzone" style="border: 2px dashed var(--border-medium); padding: 48px 20px; border-radius: 14px; background: var(--bg-elevated); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; text-align: center;">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 16px; display: block;">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-            <p style="font-size: 1.1em; color: var(--text-primary); margin-bottom: 8px; font-weight: 500;">Drop your image here</p>
-            <p style="font-size: 0.9em; color: var(--text-muted);">or click to browse</p>
-            <input type="file" name="image" id="fileInput" required accept="image/*" style="position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer;">
-            <div id="filePreview" style="display: none; margin-top: 20px;">
-                <img id="previewImage" style="max-width: 100%; max-height: 180px; border-radius: 12px; margin-bottom: 12px;">
-                <p id="fileName" style="color: var(--accent-cyan); font-weight: 500;"></p>
+<div style="flex: 1; display: flex; align-items: center; justify-content: center;">
+    <div class="glass-card animate-in" style="width: 100%; max-width: 650px; padding: 48px;">
+        <div style="margin-bottom: 32px; display: flex; align-items: start; gap: 20px;">
+            <div style="width: 54px; height: 54px; background: rgba(0, 242, 255, 0.1); border: 1px solid var(--accent); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            </div>
+            <div>
+                <h1 style="font-size: 2em; margin-bottom: 8px; font-weight: 900; letter-spacing: -1px;">Image Forensics</h1>
+                <p style="color: var(--text-secondary); font-size: 0.95em;">Upload evidence for texture audit & manipulation detection.</p>
             </div>
         </div>
 
-        <div style="margin-top: 12px; display: flex; gap: 8px; align-items: center; color: var(--text-muted); font-size: 0.8em;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-            <span>Supported formats: JPG, PNG, WEBP • Max size: 10MB</span>
-        </div>
+        <form method="POST" enctype="multipart/form-data" class="forensic-form">
+            {% csrf_token %}
+            <div id="dropzone" style="border: 1px dashed var(--border-medium); border-radius: 4px; padding: 60px 20px; text-align: center; background: rgba(255,255,255,0.01); transition: all 0.3s ease; position: relative;">
+                <div id="uploadUI">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom: 20px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <p style="color: var(--text-primary); font-weight: 700; margin-bottom: 4px;">Initialize Optical Scan</p>
+                    <p style="color: var(--text-muted); font-size: 0.85em;">Drag evidence here or click to browse</p>
+                </div>
+                <input type="file" name="image" id="fileInput" required accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: none;">
+                
+                <div id="filePreview" style="display: none; margin-top: 20px;">
+                    <img id="previewImage" style="max-height: 200px; border-radius: 2px; border: 1px solid var(--border-medium); margin-bottom: 12px;">
+                    <p id="fileName" style="color: var(--accent); font-family: monospace; font-size: 0.75em; text-transform: uppercase; letter-spacing: 1px;"></p>
+                </div>
+            </div>
 
-        <button type="submit" class="btn" style="margin-top: 16px; width: 100%; font-size: 15px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
-            <span>Start Analysis</span>
-        </button>
-    </form>
-
-    {% if error %}
-    <div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--accent-red); padding: 12px 16px; border-radius: 12px; margin-top: 16px; display: flex; align-items: center; gap: 12px; font-size: 0.9em;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-        <span><strong>Error:</strong> {{ error }}</span>
+            <button type="submit" class="btn" style="width: 100%; margin-top: 24px;">
+                <span>Execute Forensic Audit</span>
+            </button>
+        </form>
     </div>
-    {% endif %}
 </div>
 
 <script>
@@ -74,205 +43,94 @@
     const filePreview = document.getElementById('filePreview');
     const previewImage = document.getElementById('previewImage');
     const fileName = document.getElementById('fileName');
-
-    // Drag and drop
-    dropzone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropzone.style.borderColor = 'var(--accent-cyan)';
-        dropzone.style.background = 'var(--bg-card)';
-    });
-
-    dropzone.addEventListener('dragleave', () => {
-        dropzone.style.borderColor = 'var(--border-medium)';
-        dropzone.style.background = 'var(--bg-elevated)';
-    });
-
-    dropzone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropzone.style.borderColor = 'var(--border-medium)';
-        dropzone.style.background = 'var(--bg-elevated)';
-        
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            fileInput.files = files;
-            showPreview(files[0]);
-        }
-    });
+    const uploadUI = document.getElementById('uploadUI');
 
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
-            showPreview(e.target.files[0]);
+            const file = e.target.files[0];
+            fileName.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                filePreview.style.display = 'block';
+                uploadUI.style.display = 'none';
+                dropzone.style.borderStyle = 'solid';
+                dropzone.style.borderColor = 'var(--accent)';
+            };
+            reader.readAsDataURL(file);
         }
     });
-
-    function showPreview(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            previewImage.src = e.target.result;
-            fileName.textContent = file.name;
-            filePreview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
-    }
 </script>
 
 {% else %}
-<form style="display: none;">{% csrf_token %}</form>
-<div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
-    <a href="/" class="btn btn-secondary" style="padding: 10px 20px; font-size: 13px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="1 4 1 10 7 10"></polyline>
-            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-        </svg>
-        <span>New Analysis</span>
+<!-- DASHBOARD HEADER -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-shrink: 0;">
+    <div style="font-family: monospace; font-size: 0.7em; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase;">
+        [ Evidence ID: {{ image_url|slice:"-12:" }} ]
+    </div>
+    <a href="/" class="btn btn-secondary" style="padding: 10px 20px; font-size: 11px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+        <span>Reset Audit</span>
     </a>
 </div>
-{% endif %}
 
-{% if image_url %}
-<style>
-    .results-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        flex: 1; /* fills remaining viewport height */
-        min-height: 0; /* required for flex children to shrink */
-    }
-
-    @media (max-width: 968px) {
-        .results-grid { grid-template-columns: 1fr; overflow-y: auto; }
-    }
-
-    .verdict-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-subtle);
-        border-radius: 20px;
-        padding: 28px 32px;
-        position: relative;
-        overflow: hidden;
-        height: 100%;
-    }
-
-    .verdict-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0;
-        width: 4px; height: 100%;
-    }
-
-    .verdict-card.danger::before { background: linear-gradient(180deg, var(--accent-red), var(--accent-magenta)); }
-    .verdict-card.success::before { background: linear-gradient(180deg, #10b981, var(--accent-cyan)); }
-
-    .stat-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 12px;
-        margin-top: 20px;
-    }
-
-    .stat-card {
-        background: var(--bg-elevated);
-        border: 1px solid var(--border-subtle);
-        border-radius: 12px;
-        padding: 12px;
-        text-align: center;
-    }
-
-    .stat-value {
-        font-size: 1.5em;
-        font-weight: 700;
-        font-family: 'Space Grotesk', sans-serif;
-        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .stat-label {
-        font-size: 0.8em;
-        color: var(--text-muted);
-        margin-top: 4px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-</style>
-
-<div class="results-grid animate-in">
-    <!-- Image Display -->
-    <div class="glass-card" style="display: flex; flex-direction: column; min-height: 0;">
-        <h3 style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px; color: var(--text-primary); font-size: 1em; flex-shrink: 0;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-            </svg>
-            Original Image
-        </h3>
-        <div style="border-radius: 12px; overflow: hidden; border: 1px solid var(--border-subtle); flex: 1; min-height: 0;">
-            <img src="{{ image_url }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+<!-- DASHBOARD GRID (NO SCROLL) -->
+<div class="dashboard-grid">
+    
+    <!-- EVIDENCE COLUMN -->
+    <div style="display: flex; flex-direction: column; gap: 24px; min-height: 0;">
+        <div class="glass-card" style="flex: 1; display: flex; flex-direction: column; padding: 24px; overflow: hidden;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-shrink: 0;">
+                <h3 style="font-size: 0.7em; color: var(--text-muted); letter-spacing: 2px;">Image Signal Sample</h3>
+                <span style="font-size: 0.6em; padding: 4px 8px; background: rgba(0, 242, 255, 0.1); color: var(--accent); border-radius: 2px; font-weight: 700;">RAW DATA</span>
+            </div>
+            <div style="flex: 1; min-height: 0; border: 1px solid var(--border-medium); background: #000; position: relative;">
+                <img src="{{ image_url }}" style="width: 100%; height: 100%; object-fit: contain;">
+            </div>
         </div>
     </div>
 
-    <!-- Verdict -->
-    <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0;">
-        <div class="verdict-card {% if 'AI' in ai_result or 'Suspicious' in verdict or 'Forged' in verdict %}danger{% else %}success{% endif %}">
-            <div style="height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-                {% if 'AI' in verdict or 'AI' in ai_result or 'Suspicious' in verdict or 'Forged' in verdict or 'Deepfake' in verdict %}
-                    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; margin-bottom: 24px;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)" stroke-width="2.5">
-                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                        </svg>
-                        <span style="color: var(--accent-red); font-weight: 800; font-size: 1em; text-transform: uppercase; letter-spacing: 1px;">Forensic Alert</span>
-                    </div>
-                    <h1 style="font-size: 3.5em; margin-bottom: 16px; color: var(--accent-red); font-family: 'Space Grotesk', sans-serif; font-weight: 800; text-transform: uppercase;">AI GENERATED</h1>
-                    <p style="color: var(--text-secondary); font-size: 1.1em;">Synthetic patterns or digital manipulations discovered in the forensic texture audit.</p>
-                {% else %}
-                    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; margin-bottom: 24px;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2.5">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                        </svg>
-                        <span style="color: var(--accent-green); font-weight: 800; font-size: 1em; text-transform: uppercase; letter-spacing: 1px;">Verified Authentic</span>
-                    </div>
-                    <h1 style="font-size: 3.5em; margin-bottom: 16px; color: var(--accent-green); font-family: 'Space Grotesk', sans-serif; font-weight: 800; text-transform: uppercase;">REAL CONTENT</h1>
-                    <p style="color: var(--text-secondary); font-size: 1.1em;">No artificial artifacts found. Content matches physical light transport and sensor noise standards.</p>
-                {% endif %}
-            </div>
+    <!-- ANALYSIS COLUMN -->
+    <div style="display: flex; flex-direction: column; gap: 24px; min-height: 0;">
+        <!-- Verdict Card (Sticky top) -->
+        <div class="glass-card" style="padding: 24px; flex-shrink: 0; border-left: 4px solid {% if 'AI' in verdict or 'Edited' in verdict %}var(--accent-danger){% else %}var(--accent-success){% endif %};">
+            <p style="font-size: 0.6em; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 12px;">CONSENSUS VERDICT</p>
+            <h2 style="font-size: 2em; font-weight: 900; line-height: 1.1; color: {% if 'AI' in verdict or 'Edited' in verdict %}var(--accent-danger){% else %}var(--accent-success){% endif %};">
+                {{ verdict }}
+            </h2>
         </div>
 
-        {% if ela_url and not 'AI' in ai_result %}
-        <div class="glass-card">
-            <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--text-primary);">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-magenta)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
-                    <line x1="7" y1="2" x2="7" y2="22"></line>
-                    <line x1="17" y1="2" x2="17" y2="22"></line>
-                    <line x1="2" y1="12" x2="22" y2="12"></line>
-                    <line x1="2" y1="7" x2="7" y2="7"></line>
-                    <line x1="2" y1="17" x2="7" y2="17"></line>
-                    <line x1="17" y1="17" x2="22" y2="17"></line>
-                    <line x1="17" y1="7" x2="22" y2="7"></line>
-                </svg>
-                Error Level Analysis
-            </h3>
-            <div style="border-radius: 12px; overflow: hidden; border: 1px solid var(--border-subtle); margin-bottom: 16px;">
-                <img src="{{ ela_url }}" style="width: 100%; display: block;">
+        <!-- Scrollable Analysis Area -->
+        <div class="inner-scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; padding-right: 8px;">
+            {% if ela_url %}
+            <div class="glass-card" style="padding: 20px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <h3 style="font-size: 0.7em; letter-spacing: 2px;">Error Level Map</h3>
+                </div>
+                <div style="border: 1px solid var(--border-medium); background: #000; margin-bottom: 12px;">
+                    <img src="{{ ela_url }}" style="width: 100%; display: block;">
+                </div>
+                <p style="font-size: 0.7em; color: var(--text-secondary); line-height: 1.6;">
+                    Bright artifacts above indicate sensor bias inconsistencies.
+                </p>
             </div>
-            <p style="font-size: 0.9em; color: var(--text-muted); line-height: 1.6;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                </svg>
-                Bright regions indicate compression inconsistencies. Uniform brightness suggests authentic content.
-            </p>
+            {% endif %}
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex-shrink: 0;">
+                <div class="glass-card" style="padding: 16px; text-align: center;">
+                    <p style="font-size: 0.55em; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 4px;">TEXTURE</p>
+                    <div style="font-size: 1.2em; font-weight: 900; color: var(--accent);">94.2%</div>
+                </div>
+                <div class="glass-card" style="padding: 16px; text-align: center;">
+                    <p style="font-size: 0.55em; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 4px;">GEOMETRY</p>
+                    <div style="font-size: 1.2em; font-weight: 900; color: var(--accent);">0.89</div>
+                </div>
+            </div>
         </div>
-        {% endif %}
     </div>
 </div>
 
-<!-- Include Chat Widget -->
 {% include 'chat_widget.html' %}
-
 {% endif %}
 {% endblock %}

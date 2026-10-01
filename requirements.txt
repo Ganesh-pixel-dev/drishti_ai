@@ -1,0 +1,9 @@
+django
+numpy
+scipy
+opencv-python
+Pillow
+PyWavelets
+requests
+torch
+transformers

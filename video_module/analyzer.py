@@ -5,7 +5,15 @@ import json
 import numpy as np
 from PIL import Image
 from image_module.utils import run_full_analysis
-from .detectors import analyze_temporal_noise, analyze_optical_flow, detect_temporal_jitter, detect_heartbeat
+from .detectors import (
+    analyze_temporal_noise, 
+    analyze_optical_flow, 
+    detect_temporal_jitter, 
+    detect_heartbeat
+)
+from .detectors.blink_consistency import analyze_blink_consistency
+from .detectors.landmark_jitter import analyze_landmark_jitter
+from .detectors.spectral_fingerprint import analyze_spectral_fingerprint
 
 logger = logging.getLogger(__name__)
 
@@ -78,11 +86,7 @@ def evaluate_video_final(video_path, max_duration=60):
     noise_result = analyze_temporal_noise(video_path, jitter=jitter_score)
     flow_result = analyze_optical_flow(video_path)
     
-    # HEAVY ARMOUR: BIOLOGICAL PULSE SCAN
-    from .detectors.heartbeat_detector import detect_heartbeat
-    from .detectors.blink_consistency import analyze_blink_consistency
-    from .detectors.landmark_jitter import analyze_landmark_jitter
-    from .detectors.spectral_fingerprint import analyze_spectral_fingerprint
+    # BIOLOGICAL PULSE SCAN (Imports moved to top for efficiency)
     
     heart_result = detect_heartbeat(video_path)
     heart_score = heart_result.get("score", 0.0)
@@ -154,19 +158,16 @@ def evaluate_video_final(video_path, max_duration=60):
     ai_threshold = 0.30 
     
     if ai_ratio >= ai_threshold or temporal_score > 0.65:
-        overall_verdict = f"Highly Likely Deepfake (Consensus AI Ratio: {ai_ratio*100:.0f}%)"
+        overall_verdict = "Final verdict:- AI generated video"
         final_conf = max(ai_ratio, temporal_score)
     elif suspicious_ratio > 0.40 or temporal_score > 0.40 or ai_ratio > 0.10:
-        overall_verdict = "Suspicious (Inconsistent Forensic Markers)"
+        overall_verdict = "Final verdict:- Edited video"
         final_conf = max(suspicious_ratio, temporal_score, ai_ratio)
     else:
-        overall_verdict = "Likely Authentic"
-        if camera_brand: overall_verdict = "AUTHENTIC (Verified Hardware Signature)"
+        overall_verdict = "Final verdict:- Real Video"
         final_conf = 1.0 - max(ai_ratio, temporal_score)
 
-    if blink_score > 0.8: overall_verdict += " [True Sight: Reptilian Gaze]"
-    if volume_score > 0.7: overall_verdict += " [True Sight: Volume Morphing]"
-    if spectral_score > 0.8: overall_verdict += " [True Sight: Generative Pulse]"
+
 
     # Cleanup
     for p in frame_paths:
