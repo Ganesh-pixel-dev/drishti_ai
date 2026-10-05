@@ -33,4 +33,10 @@ results_cache/
 
 # Debug output
 *_output.txt
-final_test.txt
+
+# Benchmark data (re-download with scripts/get_data.py)
+data/
+# Debug files moved out of the project root, kept locally only
+_leftovers/
+*.code-workspace
+.pytest_cache/
