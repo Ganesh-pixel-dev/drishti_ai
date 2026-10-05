@@ -1,44 +1,19 @@
-import cv2
 import numpy as np
 import pywt
 
+from ._common import load_gray, not_applicable, result
+
+
 def detect_wavelet_anomalies(image_path):
-    """
-    Analyzes wavelets for statistical anomalies in high-frequency subbands.
-    Deepfakes often show specific distributions in HL, LH, and HH subbands.
-    """
-    img = cv2.imread(image_path, 0)
-    if img is None:
-        return {"score": 0.0, "details": "File not found"}
+    """Diagonal-subband energy and horizontal/vertical imbalance of a Haar wavelet transform."""
+    gray = load_gray(image_path)
+    if min(gray.shape) < 16:
+        return not_applicable("Image too small")
 
-    # Discrete Wavelet Transform (using Daubechies 1)
-    coeffs2 = pywt.dwt2(img, 'db1')
-    LL, (LH, HL, HH) = coeffs2
+    _, (lh, hl, hh) = pywt.dwt2(gray.astype(np.float32), "db1")
+    lh_mean, hl_mean, hh_mean = (float(np.mean(np.abs(b))) for b in (lh, hl, hh))
 
-    # Feature: Mean and Variance of coefficients
-    # In natural images, HH (diagonal high frequency) has very low energy and specific distribution
-    lh_mean = np.mean(np.abs(LH))
-    hl_mean = np.mean(np.abs(HL))
-    hh_mean = np.mean(np.abs(HH))
-
-    lh_std = np.std(LH)
-    hl_std = np.std(HL)
-    hh_std = np.std(HH)
-
-    # Forgery indicators: 
-    # 1. Unusually high energy in HH subband (sharpening or AI synthesis noise)
-    # 2. Inconsistency between LH and HL (non-isotropic editing/stretching)
-    
     anisotropy = abs(lh_mean - hl_mean) / (lh_mean + hl_mean + 1e-6)
-    energy_level = hh_mean / (lh_mean + hl_mean + 1e-6)
-
-    # Calibrate: 
-    # Higher energy in HH relative to others = sus
-    # Significant anisotropy = sus
-    score = (min(anisotropy * 5.0, 1.0) * 0.4) + (min(energy_level * 2.0, 1.0) * 0.6)
-
-    return {
-        "score": float(score),
-        "hh_energy_ratio": float(energy_level),
-        "anisotropy_index": float(anisotropy)
-    }
+    energy_ratio = hh_mean / (lh_mean + hl_mean + 1e-6)
+    score = min(anisotropy * 5.0, 1.0) * 0.4 + min(energy_ratio * 2.0, 1.0) * 0.6
+    return result(score, hh_energy_ratio=energy_ratio, anisotropy_index=anisotropy)

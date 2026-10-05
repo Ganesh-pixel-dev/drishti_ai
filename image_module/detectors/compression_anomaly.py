@@ -1,62 +1,27 @@
-import cv2
 import numpy as np
 
+from ._common import load_gray, not_applicable, result
+
+
 def detect_compression_anomaly(image_path):
-    """
-    Detects Block Artifact Grid (BAG) inconsistencies.
-    JPEG compression happens in 8x8 blocks. If an image was spliced,
-    the 8x8 grids of the original and the splice will likely be misaligned.
-    """
-    img = cv2.imread(image_path, 0)
-    if img is None:
-        return {"score": 0.0, "details": "File not found"}
+    """Measures how strongly the image shows a single 8x8 JPEG block grid.
 
-    # Compute a simple 'Blocking' signal
-    # We look at the difference across 8x8 boundaries vs internal pixels
+    A clean JPEG has one grid offset where pixel steps across block borders are
+    larger than elsewhere. Spliced, resized or never-JPEG images show a weaker
+    or conflicting grid. Higher score means the grid is weaker.
+    """
+    img = load_gray(image_path).astype(np.int32)
     h, w = img.shape
-    if h < 16 or w < 16:
-        return {"score": 0.0, "details": "Image too small"}
+    if h < 32 or w < 32:
+        return not_applicable("Image too small")
 
-    # Grid alignment check
-    def get_grid_strength(offset_y, offset_x):
-        # Slice image into the 8x8 grid with given offset
-        rows = range(offset_y + 7, h - 8, 8)
-        cols = range(offset_x + 7, w - 8, 8)
-        if not rows or not cols: return 0
-        
-        # Horizontal boundaries
-        h_diff = np.abs(img[rows, :].astype(np.int32) - img[np.array(rows)+1, :].astype(np.int32))
-        # Vertical boundaries
-        v_diff = np.abs(img[:, cols].astype(np.int32) - img[:, np.array(cols)+1].astype(np.int32))
-        
-        return np.mean(h_diff) + np.mean(v_diff)
+    # Mean absolute step across every row border and every column border.
+    row_steps = np.abs(img[1:, :] - img[:-1, :]).mean(axis=1)
+    col_steps = np.abs(img[:, 1:] - img[:, :-1]).mean(axis=0)
 
-    # Test all 64 possible offsets to find the 'true' grid
-    strengths = []
-    for y in range(8):
-        for x in range(8):
-            strengths.append(get_grid_strength(y, x))
-    
-    strengths = np.array(strengths).reshape(8, 8)
-    
-    # In a clean JPEG, one offset will have a much higher 'strength' (boundary difference)
-    # In a forged image or a PNG, the grid will be weak or multiple grids will conflict.
-    max_strength = np.max(strengths)
-    avg_strength = np.mean(strengths)
-    
-    grid_dominance = (max_strength - avg_strength) / (avg_strength + 1e-6)
-    
-    # Final Score: 
-    # High grid dominance = likely authentic JPEG (consistent grid).
-    # Low grid dominance = suspicious (no grid, multicompressed, or AI-generated).
-    if grid_dominance < 0.2:
-        score = 0.5 # Suspicious
-    elif grid_dominance < 0.1:
-        score = 0.8 # Highly Likely Forged/AI
-    else:
-        score = 0.0 # Consistent
-        
-    return {
-        "score": float(np.clip(score, 0, 1)),
-        "grid_dominance": float(grid_dominance)
-    }
+    strengths = np.array([
+        [row_steps[oy + 7::8].mean() + col_steps[ox + 7::8].mean() for ox in range(8)]
+        for oy in range(8)
+    ])
+    dominance = (strengths.max() - strengths.mean()) / (strengths.mean() + 1e-6)
+    return result(1.0 - min(dominance / 0.2, 1.0), grid_dominance=dominance)

@@ -1,46 +1,27 @@
 import cv2
 import numpy as np
+from scipy.stats import kurtosis
+
+from ._common import load_gray, not_applicable, result
+
 
 def detect_adversarial_noise(image_path):
-    """
-    Adversarial Armour: Detects non-random digital noise patterns.
-    Catching pixels designed to fool AI (Adversarial Attacks).
-    """
-    img = cv2.imread(image_path, 0)
-    if img is None: return {"score": 0.0, "details": "File not found"}
+    """Kurtosis and spectral spikes of the Laplacian (high-pass) residual.
 
-    # Adversarial noise is often high-frequency but spatially correlated 
-    # to target specific neurons.
-    
-    # 1. High-Pass Residual
-    laplacian = cv2.Laplacian(img, cv2.CV_64F)
-    
-    # 2. Statistical Kurtosis of the Noise
-    # Natural noise is Gaussian (bell-shaped). 
-    # Adversarial noise has extreme outliers or specific distribution peaks.
-    from scipy.stats import kurtosis
-    k = abs(kurtosis(laplacian.flatten()))
-    
-    # Normalized score: high kurtosis in the high-pass residual = sus
-    k_score = min(k / 50.0, 1.0)
-    
-    # 3. FFT Entropy of Noise
-    fft = np.fft.fft2(laplacian)
-    fft_shift = np.fft.fftshift(fft)
-    mag = 20 * np.log(np.abs(fft_shift) + 1e-6)
-    
-    # Standard noise is evenly spread. Adversarial noise often has 'spikes' in 
-    # the frequency domain to represent the pattern.
-    max_f = np.max(mag)
-    avg_f = np.mean(mag)
-    f_gap = max_f - avg_f
-    
+    Structured, non-Gaussian high-frequency patterns (including the periodic
+    grids some generators leave) show up as heavy tails and sharp peaks in the
+    spectrum of this residual.
+    """
+    gray = load_gray(image_path)
+    if min(gray.shape) < 32:
+        return not_applicable("Image too small")
+
+    lap = cv2.Laplacian(gray, cv2.CV_64F)
+    k = abs(float(kurtosis(lap.ravel())))
+    k_score = min(k / 50.0, 1.0) if np.isfinite(k) else 0.0
+
+    mag = 20 * np.log(np.abs(np.fft.fftshift(np.fft.fft2(lap))) + 1e-6)
+    f_gap = float(mag.max() - mag.mean())
     f_score = min(f_gap / 100.0, 1.0)
 
-    final_score = (k_score * 0.5) + (f_score * 0.5)
-
-    return {
-        "score": float(final_score),
-        "noise_kurtosis": float(k),
-        "freq_gap": float(f_gap)
-    }
+    return result(k_score * 0.5 + f_score * 0.5, noise_kurtosis=k, freq_gap=f_gap)
