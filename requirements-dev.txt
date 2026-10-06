@@ -1,0 +1,6 @@
+-r requirements.txt
+pytest
+pytest-django
+pandas
+pyarrow
+huggingface_hub
