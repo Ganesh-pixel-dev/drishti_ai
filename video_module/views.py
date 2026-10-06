@@ -1,53 +1,43 @@
-from django.shortcuts import render
-from django.core.files.storage import FileSystemStorage
-from .analyzer import evaluate_video_final
-import os
-import uuid
+import json
 import logging
+import os
+
+from django.conf import settings
+from django.shortcuts import render
+
+from image_module.uploads import saved_temp
+
+from .analyzer import evaluate_video_final
 
 logger = logging.getLogger(__name__)
 
+VIDEO_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv", ".webm"}
+
+
 def home(request):
     context = {}
-    
-    if request.method == 'POST' and request.FILES.get('video'):
-        video = request.FILES['video']
-        
-        # Security: validate extension
-        ext = os.path.splitext(video.name)[1].lower()
-        if ext not in ['.mp4', '.avi', '.mov', '.mkv']:
-            context['error'] = "Invalid file type. Only MP4, AVI, MOV, MKV are allowed."
-            return render(request, 'video_module/video.html', context)
-
-        # Unique filename
-        safe_filename = f"vid_{uuid.uuid4().hex}{ext}"
-        fs = FileSystemStorage()
-        filename = fs.save(safe_filename, video)
-        file_url = fs.url(filename)
-        video_path = os.path.join(fs.location, filename)
-
-        try:
-            # Analyze
-            result = evaluate_video_final(video_path, max_duration=60)
-            
-            if "error" in result:
-                context['error'] = result['error']
+    if request.method == "POST":
+        video = request.FILES.get("video")
+        if video is None:
+            context["error"] = "Choose a video first."
+        else:
+            ext = os.path.splitext(video.name)[1].lower()
+            if ext not in VIDEO_EXTENSIONS:
+                context["error"] = "Unsupported file type. Use MP4, AVI, MOV, MKV or WebM."
+            elif video.size > settings.MAX_VIDEO_UPLOAD_BYTES:
+                context["error"] = f"File is larger than {settings.MAX_VIDEO_UPLOAD_BYTES // (1024 * 1024)} MB."
             else:
-                context['result'] = result
-                import json
-                request.session['last_image_path'] = None
-                request.session['last_context'] = json.dumps({
-                    "video_duration_seconds": result.get('duration'),
-                    "verdict": result.get('verdict'),
-                    "ai_ratio_percent": result.get('ai_ratio_percent'),
-                    "jitter_score": result.get('jitter_score'),
-                    "frames_analyzed": result.get('frames_analyzed')
-                })
-                
-        except Exception as e:
-            logger.error(f"Video analysis failed: {str(e)}", exc_info=True)
-            context['error'] = "Server error during video deepfake breakdown."
-            
-        context['video_url'] = file_url
-
-    return render(request, 'video_module/video.html', context)
+                try:
+                    with saved_temp(video, ext) as (_, path):
+                        result = evaluate_video_final(path)
+                    if "error" in result:
+                        context["error"] = result["error"]
+                    else:
+                        context["result"] = result
+                        request.session["last_context"] = json.dumps({"tasks": {"video": {
+                            "verdict": result["verdict"], "probability": result["flagged_frame_percent"] / 100,
+                            "evidence": [result["strongest_check"]]}}})
+                except Exception:
+                    logger.exception("Video analysis failed")
+                    context["error"] = "Analysis failed on this video."
+    return render(request, "video_module/video.html", context)

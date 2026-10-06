@@ -22,8 +22,7 @@ def analyze_spectral_fingerprint(video_path, max_frames=60, roi_size=32):
         if fps < 1: fps = 30
         
         # We look for a face to anchor the ROI
-        CASCADE_PATH = os.path.join(cv2.__path__[0], 'data')
-        face_cascade = cv2.CascadeClassifier(os.path.join(CASCADE_PATH, 'haarcascade_frontalface_default.xml'))
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         
         pixel_history = []
         

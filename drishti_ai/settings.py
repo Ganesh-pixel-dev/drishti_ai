@@ -13,20 +13,44 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+def _load_dotenv(path):
+    """Minimal .env reader so no extra package is needed. Real environment variables win."""
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, value = line.split("=", 1)
+            os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-only-not-secret-change-me')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+_load_dotenv(BASE_DIR / ".env")
 
-ALLOWED_HOSTS = []
+DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "dev-only-insecure-key"
+    else:
+        raise ImproperlyConfigured(
+            "Set DJANGO_SECRET_KEY (or DJANGO_DEBUG=1 for local development). See .env.example.")
+
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+
+# Uploads are analysed from a temporary directory and deleted; nothing is stored.
+MAX_IMAGE_UPLOAD_BYTES = 15 * 1024 * 1024
+MAX_VIDEO_UPLOAD_BYTES = 100 * 1024 * 1024
+MAX_IMAGE_PIXELS = 50_000_000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 110 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+MAX_TEXT_CHARS = 20_000
 
 
 # Application definition
@@ -119,5 +143,3 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'

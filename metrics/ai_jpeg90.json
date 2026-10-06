@@ -1,0 +1,258 @@
+{
+  "task": "ai",
+  "condition": "jpeg90",
+  "only_ext": null,
+  "seed": 1337,
+  "split": {
+    "cal": 2000,
+    "test": 1750,
+    "external_test": 0
+  },
+  "sources": [
+    "tiny-genimage"
+  ],
+  "selection": {
+    "min_auc_edge_from_0.5": 0.03,
+    "variants_cv": {
+      "detectors": {
+        "features": [
+          "ela",
+          "cfa",
+          "compression",
+          "noise",
+          "median",
+          "wavelet",
+          "luminance",
+          "histogram",
+          "frequency",
+          "adversarial"
+        ],
+        "C": 10.0,
+        "cv_auc_cal": 0.8604560000000001
+      },
+      "detectors+classifiers": {
+        "features": [
+          "ela",
+          "cfa",
+          "compression",
+          "noise",
+          "median",
+          "wavelet",
+          "luminance",
+          "histogram",
+          "frequency",
+          "adversarial",
+          "clf_swin_sdxl"
+        ],
+        "C": 10.0,
+        "cv_auc_cal": 0.872004
+      },
+      "classifiers_only": {
+        "features": [
+          "clf_swin_sdxl"
+        ],
+        "C": 0.01,
+        "cv_auc_cal": 0.596198
+      }
+    },
+    "chosen": "detectors+classifiers"
+  },
+  "per_detector": {
+    "ela": {
+      "auc_cal": 0.557649,
+      "auc_test": 0.5554808163265306,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "cfa": {
+      "auc_cal": 0.166784,
+      "auc_test": 0.1768907755102041,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "compression": {
+      "auc_cal": 0.45942700000000003,
+      "auc_test": 0.47547297959183676,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "noise": {
+      "auc_cal": 0.36719100000000005,
+      "auc_test": 0.3322422857142857,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "median": {
+      "auc_cal": 0.611136,
+      "auc_test": 0.5037008979591837,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "wavelet": {
+      "auc_cal": 0.447739,
+      "auc_test": 0.4154827755102041,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "luminance": {
+      "auc_cal": 0.5952230000000001,
+      "auc_test": 0.6291422040816327,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "histogram": {
+      "auc_cal": 0.609528,
+      "auc_test": 0.5947043265306122,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "patch": {
+      "auc_cal": 0.5029775,
+      "auc_test": 0.4394442448979592,
+      "auc_external": null,
+      "kept": false,
+      "inapplicable_share_cal": 0.0075
+    },
+    "frequency": {
+      "auc_cal": 0.2908195,
+      "auc_test": 0.24970971428571428,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.107
+    },
+    "reflection": {
+      "auc_cal": 0.5004995,
+      "auc_test": 0.4959954285714286,
+      "auc_external": null,
+      "kept": false,
+      "inapplicable_share_cal": 0.9985
+    },
+    "adversarial": {
+      "auc_cal": 0.5970989999999999,
+      "auc_test": 0.5365087346938776,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "geometric": {
+      "auc_cal": 0.49949999999999994,
+      "auc_test": 0.4988571428571429,
+      "auc_external": null,
+      "kept": false,
+      "inapplicable_share_cal": 0.9845
+    },
+    "boundary": {
+      "auc_cal": 0.497482,
+      "auc_test": 0.4885139591836735,
+      "auc_external": null,
+      "kept": false,
+      "inapplicable_share_cal": 0.9845
+    },
+    "exif": {
+      "auc_cal": 0.5,
+      "auc_test": NaN,
+      "auc_external": null,
+      "kept": false,
+      "inapplicable_share_cal": 1.0
+    }
+  },
+  "coefficients": {
+    "ela": 0.05145912214698993,
+    "cfa": -2.4946377139775975,
+    "compression": 0.9701739052601727,
+    "noise": -0.5459792664958784,
+    "median": 0.14387003012447686,
+    "wavelet": -0.051699098826305155,
+    "luminance": 0.4283426732735453,
+    "histogram": 0.020952315980579995,
+    "frequency": -0.6713539193192077,
+    "adversarial": -0.1785220459475789,
+    "clf_swin_sdxl": 0.5125088666421773
+  },
+  "intercept": 0.4724989198213656,
+  "cal_in_sample": {
+    "n": 2000,
+    "n_positive": 1000,
+    "accuracy": 0.8015,
+    "roc_auc": 0.875729,
+    "roc_auc_ci95": [
+      0.8598755775441022,
+      0.8896725424095434
+    ],
+    "precision": 0.8231511254019293,
+    "recall": 0.768,
+    "confusion": {
+      "tn": 835,
+      "fp": 165,
+      "fn": 232,
+      "tp": 768
+    },
+    "baseline_accuracy_majority_class": 0.5
+  },
+  "test": {
+    "n": 1750,
+    "n_positive": 875,
+    "accuracy": 0.8228571428571428,
+    "roc_auc": 0.8975111836734694,
+    "roc_auc_ci95": [
+      0.8828328953399377,
+      0.9115628880711548
+    ],
+    "precision": 0.8424242424242424,
+    "recall": 0.7942857142857143,
+    "confusion": {
+      "tn": 745,
+      "fp": 130,
+      "fn": 180,
+      "tp": 695
+    },
+    "baseline_accuracy_majority_class": 0.5
+  },
+  "metadata_only_baseline_test": {
+    "n": 1750,
+    "n_positive": 875,
+    "accuracy": 1.0,
+    "roc_auc": 1.0,
+    "roc_auc_ci95": [
+      0.9999999999999999,
+      1.0
+    ],
+    "precision": 1.0,
+    "recall": 1.0,
+    "confusion": {
+      "tn": 875,
+      "fp": 0,
+      "fn": 0,
+      "tp": 875
+    },
+    "baseline_accuracy_majority_class": 0.5
+  },
+  "per_classifier": {
+    "clf_vit_deepfake": {
+      "auc_cal": 0.385165,
+      "auc_test": 0.4662857142857143
+    },
+    "clf_swin_sdxl": {
+      "auc_cal": 0.6132249999999999,
+      "auc_test": 0.6221884081632653
+    }
+  },
+  "test_per_generator_recall": {
+    "ADM": 0.976,
+    "BigGAN": 0.968,
+    "GLIDE": 0.92,
+    "Midjourney": 0.72,
+    "SD15": 0.624,
+    "VQDM": 0.752,
+    "Wukong": 0.6
+  },
+  "test_real_specificity": 0.8514285714285714
+}

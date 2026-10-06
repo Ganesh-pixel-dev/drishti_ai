@@ -1,136 +1,56 @@
 {% extends 'base.html' %}
+{% block title %}Image report | Drishti AI{% endblock %}
 {% block content %}
+<h1>Image check</h1>
+<p class="lede">Runs 15 signal checks and two learned combiners on one image and reports what they found. A flag means a person should look closer. It is not proof of anything.</p>
 
-{% if not image_url %}
-<div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-    <div class="glass-card animate-in" style="width: 100%; max-width: 650px; padding: 48px;">
-        <div style="margin-bottom: 32px; display: flex; align-items: start; gap: 20px;">
-            <div style="width: 54px; height: 54px; background: rgba(0, 242, 255, 0.1); border: 1px solid var(--accent); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-            </div>
-            <div>
-                <h1 style="font-size: 2em; margin-bottom: 8px; font-weight: 900; letter-spacing: -1px;">Image Forensics</h1>
-                <p style="color: var(--text-secondary); font-size: 0.95em;">Upload evidence for texture audit & manipulation detection.</p>
-            </div>
-        </div>
-
-        <form method="POST" enctype="multipart/form-data" class="forensic-form">
-            {% csrf_token %}
-            <div id="dropzone" style="border: 1px dashed var(--border-medium); border-radius: 4px; padding: 60px 20px; text-align: center; background: rgba(255,255,255,0.01); transition: all 0.3s ease; position: relative;">
-                <div id="uploadUI">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom: 20px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                    <p style="color: var(--text-primary); font-weight: 700; margin-bottom: 4px;">Initialize Optical Scan</p>
-                    <p style="color: var(--text-muted); font-size: 0.85em;">Drag evidence here or click to browse</p>
-                </div>
-                <input type="file" name="image" id="fileInput" required accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: none;">
-                
-                <div id="filePreview" style="display: none; margin-top: 20px;">
-                    <img id="previewImage" style="max-height: 200px; border-radius: 2px; border: 1px solid var(--border-medium); margin-bottom: 12px;">
-                    <p id="fileName" style="color: var(--accent); font-family: monospace; font-size: 0.75em; text-transform: uppercase; letter-spacing: 1px;"></p>
-                </div>
-            </div>
-
-            <button type="submit" class="btn" style="width: 100%; margin-top: 24px;">
-                <span>Execute Forensic Audit</span>
-            </button>
-        </form>
-    </div>
+<div class="panel">
+  <form class="upload" method="post" enctype="multipart/form-data">{% csrf_token %}
+    <label for="image" class="label">Image (JPG, PNG, WebP, BMP, TIFF, up to 15 MB)</label>
+    <input id="image" type="file" name="image" accept="image/*" required>
+    <button type="submit">Analyse</button>
+  </form>
+  <p class="caveat">The file is analysed in a temporary folder and deleted. Nothing is stored.</p>
 </div>
 
-<script>
-    const dropzone = document.getElementById('dropzone');
-    const fileInput = document.getElementById('fileInput');
-    const filePreview = document.getElementById('filePreview');
-    const previewImage = document.getElementById('previewImage');
-    const fileName = document.getElementById('fileName');
-    const uploadUI = document.getElementById('uploadUI');
+{% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
 
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            const file = e.target.files[0];
-            fileName.textContent = file.name;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImage.src = e.target.result;
-                filePreview.style.display = 'block';
-                uploadUI.style.display = 'none';
-                dropzone.style.borderStyle = 'solid';
-                dropzone.style.borderColor = 'var(--accent)';
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-</script>
-
-{% else %}
-<!-- DASHBOARD HEADER -->
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-shrink: 0;">
-    <div style="font-family: monospace; font-size: 0.7em; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase;">
-        [ Evidence ID: {{ image_url|slice:"-12:" }} ]
-    </div>
-    <a href="/" class="btn btn-secondary" style="padding: 10px 20px; font-size: 11px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-        <span>Reset Audit</span>
-    </a>
+{% if report %}
+<div class="grid">
+  <figure><img src="{{ image_uri }}" alt="Uploaded image {{ filename }}"><figcaption>{{ filename }}</figcaption></figure>
+  {% if ela_uri %}<figure><img src="{{ ela_uri }}" alt="Error level analysis heatmap"><figcaption>ELA heatmap (JPEG re-save at quality 90). Bright areas changed most. Edges and noise also glow, so read it as a hint.</figcaption></figure>{% endif %}
 </div>
 
-<!-- DASHBOARD GRID (NO SCROLL) -->
-<div class="dashboard-grid">
-    
-    <!-- EVIDENCE COLUMN -->
-    <div style="display: flex; flex-direction: column; gap: 24px; min-height: 0;">
-        <div class="glass-card" style="flex: 1; display: flex; flex-direction: column; padding: 24px; overflow: hidden;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-shrink: 0;">
-                <h3 style="font-size: 0.7em; color: var(--text-muted); letter-spacing: 2px;">Image Signal Sample</h3>
-                <span style="font-size: 0.6em; padding: 4px 8px; background: rgba(0, 242, 255, 0.1); color: var(--accent); border-radius: 2px; font-weight: 700;">RAW DATA</span>
-            </div>
-            <div style="flex: 1; min-height: 0; border: 1px solid var(--border-medium); background: #000; position: relative;">
-                <img src="{{ image_url }}" style="width: 100%; height: 100%; object-fit: contain;">
-            </div>
-        </div>
-    </div>
+{% if not report.tasks %}<div class="notice">No trained weights found. Run scripts/get_data.py, scripts/extract_scores.py and scripts/train_combiner.py first.</div>{% endif %}
 
-    <!-- ANALYSIS COLUMN -->
-    <div style="display: flex; flex-direction: column; gap: 24px; min-height: 0;">
-        <!-- Verdict Card (Sticky top) -->
-        <div class="glass-card" style="padding: 24px; flex-shrink: 0; border-left: 4px solid {% if 'AI' in verdict or 'Edited' in verdict %}var(--accent-danger){% else %}var(--accent-success){% endif %};">
-            <p style="font-size: 0.6em; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 12px;">CONSENSUS VERDICT</p>
-            <h2 style="font-size: 2em; font-weight: 900; line-height: 1.1; color: {% if 'AI' in verdict or 'Edited' in verdict %}var(--accent-danger){% else %}var(--accent-success){% endif %};">
-                {{ verdict }}
-            </h2>
-        </div>
+{% for key, task in report.tasks.items %}
+<section class="panel" aria-labelledby="t-{{ key }}">
+  <h2 id="t-{{ key }}">{{ task.title }}</h2>
+  <p class="verdict{% if task.flagged %} flag{% endif %}">{{ task.verdict }}</p>
+  <div class="meter{% if task.flagged %} flag{% endif %}" role="img" aria-label="Combined score {{ task.probability|floatformat:2 }}"><i style="width: {% widthratio task.probability 1 100 %}%"></i></div>
+  <p class="caveat">Combined score <span class="mono">{{ task.probability|floatformat:2 }}</span> (flag threshold {{ task.threshold }}). On held-out test images this combiner scored ROC AUC <span class="mono">{{ task.test_roc_auc|floatformat:2 }}</span> and accuracy <span class="mono">{{ task.test_accuracy|floatformat:2 }}</span>. See the README for what those images were and where it fails.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Check</th><th class="num">Score</th><th class="num">Learned weight</th><th class="num">Counted</th></tr></thead>
+    <tbody>
+    {% for r in task.rows %}
+      <tr><td>{{ r.label }}</td><td class="num">{{ r.value|floatformat:2 }}</td><td class="num">{{ r.weight|floatformat:2 }}</td>
+      <td class="num">{{ r.contribution|floatformat:2 }} <span class="bar{% if r.contribution > 0 %} pos{% endif %}" style="width: {% widthratio r.contribution|floatformat:2 1 40 %}px" aria-hidden="true"></span> <span class="caveat">{{ r.direction }}</span></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="caveat">"Counted" is the check's push on the combined score in log-odds units: positive pushes toward a flag. Checks with no measurable signal on the training data got zero weight and are not listed{% if task.dropped %} ({{ task.dropped|join:", " }}){% endif %}.</p>
+</section>
+{% endfor %}
 
-        <!-- Scrollable Analysis Area -->
-        <div class="inner-scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; padding-right: 8px;">
-            {% if ela_url %}
-            <div class="glass-card" style="padding: 20px;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <h3 style="font-size: 0.7em; letter-spacing: 2px;">Error Level Map</h3>
-                </div>
-                <div style="border: 1px solid var(--border-medium); background: #000; margin-bottom: 12px;">
-                    <img src="{{ ela_url }}" style="width: 100%; display: block;">
-                </div>
-                <p style="font-size: 0.7em; color: var(--text-secondary); line-height: 1.6;">
-                    Bright artifacts above indicate sensor bias inconsistencies.
-                </p>
-            </div>
-            {% endif %}
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex-shrink: 0;">
-                <div class="glass-card" style="padding: 16px; text-align: center;">
-                    <p style="font-size: 0.55em; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 4px;">TEXTURE</p>
-                    <div style="font-size: 1.2em; font-weight: 900; color: var(--accent);">94.2%</div>
-                </div>
-                <div class="glass-card" style="padding: 16px; text-align: center;">
-                    <p style="font-size: 0.55em; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 4px;">GEOMETRY</p>
-                    <div style="font-size: 1.2em; font-weight: 900; color: var(--accent);">0.89</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<details class="panel"><summary>All raw check scores</summary>
+  <div class="scroll"><table>
+    <thead><tr><th>Check</th><th class="num">Raw score (0 to 1)</th><th>Note</th></tr></thead>
+    <tbody>{% for d in report.detectors %}
+      <tr><td>{{ d.label }}</td><td class="num">{% if d.applicable %}{{ d.score|floatformat:3 }}{% else %}n/a{% endif %}</td><td class="caveat">{% if d.error %}Failed: {{ d.error }}{% elif not d.applicable %}Not applicable to this image{% else %}{{ d.details|default:"" }}{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+</details>
+{% endif %}
 
 {% include 'chat_widget.html' %}
-{% endif %}
 {% endblock %}

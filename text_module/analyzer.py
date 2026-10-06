@@ -1,4 +1,5 @@
 import logging
+import os
 import json
 import re
 import math
@@ -88,7 +89,7 @@ def _compute_word_repetition_score(words):
 def _compute_sentence_complexity_score(sentences):
     """
     AI produces sentences with very consistent internal complexity.
-    Measure comma density per sentence — AI uses commas very uniformly.
+    Measure comma density per sentence. AI uses commas very uniformly.
     """
     if len(sentences) < 3:
         return 0.0
@@ -212,13 +213,13 @@ def _local_heuristic_check(text):
     you_ratio = you_count / len(words) if words else 0
     if you_ratio > 0.05 and len(words) > 30:
         score += 0.10
-        reasons.append(f"Heavy 'you/your' usage ({you_count} instances) — motivational AI pattern")
+        reasons.append(f"Heavy 'you/your' usage ({you_count} instances)")
     
     # 11. Em-dash and semicolon usage (ChatGPT signature punctuation)
     special_punct = text.count('—') + text.count('–') + text.count(';')
     if special_punct >= 3 and len(sentences) <= 8:
         score += 0.10
-        reasons.append(f"Heavy em-dash/semicolon usage ({special_punct}) — ChatGPT signature")
+        reasons.append(f"Heavy em-dash/semicolon usage ({special_punct})")
     elif special_punct >= 2:
         score += 0.05
     
@@ -235,62 +236,39 @@ def _local_heuristic_check(text):
 
 def analyze_text(text_content):
     results = {}
-    # [LOCAL ARMADA] Heuristic Analysis is now PRIMARY.
-    # Cloud dependencies (Gemini) have been removed for 100% privacy.
     is_ai, score, reason = _local_heuristic_check(text_content)
     results["is_ai"] = is_ai
     results["ai_confidence"] = round(score * 100, 1)
     results["explanation"] = reason
-    results["method"] = "Local Heuristic Engine (100% Private)"
+    results["method"] = "Phrase and style heuristics (unvalidated)"
 
-    # 3. Live Web Plagiarism Search 
-    import os
-    import requests
-    serper_key = os.getenv("SERPER_API_KEY")
-    if not serper_key:
-        env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
-        if os.path.exists(env_path):
-            with open(env_path, 'r') as f:
-                for line in f:
-                    if line.strip().startswith('SERPER_API_KEY='):
-                        serper_key = line.split('=', 1)[1].strip()
-
-    if serper_key:
-        # Extract a random, reasonably long sentence from the text to search for
-        sentences = [s.strip() for s in re.split(r'[.!?]+', text_content) if len(s.strip().split()) > 10]
-        if sentences:
-            # We search for the first substantial sentence without strict quotes to allow for footnote brackets [c]
-            search_query = sentences[0]
-            
-            try:
-                headers = {
-                    'X-API-KEY': serper_key,
-                    'Content-Type': 'application/json'
-                }
-                payload = json.dumps({"q": search_query})
-                # Using 10 sec timeout to prevent blocking the UI
-                resp = requests.request("POST", "https://google.serper.dev/search", headers=headers, data=payload, timeout=10)
-                
-                if resp.status_code == 200:
-                    resp_data = resp.json()
-                    organic_results = resp_data.get("organic", [])
-                    
-                    if organic_results:
-                        results["plagiarism_found"] = True
-                        results["plagiarism_message"] = "We found exact matches of this text across the web!"
-                        # Take top 3 sources
-                        results["plagiarism_sources"] = [{"title": r.get('title'), "url": r.get('link')} for r in organic_results[:3]]
-                    else:
-                        results["plagiarism_found"] = False
-                        results["plagiarism_message"] = "No exact matches found online. Looks original!"
-                else:
-                    results["plagiarism_message"] = "Web search engine returned an error."
-            except Exception as e:
-                logger.error(f"Plagiarism search error: {e}")
-                results["plagiarism_message"] = "Failed to connect to the plagiarism search engine."
-        else:
-            results["plagiarism_message"] = "Text is too short or lacks full sentences to run a web plagiarism check."
-    else:
-        results["plagiarism_message"] = "Requires SERPER_API_KEY in .env file to enable live web search."
-    
+    results.update(_web_search(text_content))
     return results
+
+
+def _web_search(text):
+    """Optional: send the first long sentence to serper.dev and list the top hits.
+
+    A search engine returns results for almost any sentence, so hits are leads to check
+    by hand, not proof of copying. Needs SERPER_API_KEY. Off by default.
+    """
+    import requests
+    key = os.environ.get("SERPER_API_KEY")
+    if not key:
+        return {"search_message": "Web search is off. Set SERPER_API_KEY to enable it. "
+                                  "It sends the first long sentence to serper.dev."}
+    sentences = [s.strip() for s in re.split(r"[.!?]+", text) if len(s.strip().split()) > 10]
+    if not sentences:
+        return {"search_message": "No sentence long enough to search for."}
+    try:
+        resp = requests.post("https://google.serper.dev/search", timeout=10,
+                             headers={"X-API-KEY": key, "Content-Type": "application/json"},
+                             data=json.dumps({"q": sentences[0]}))
+        resp.raise_for_status()
+        hits = resp.json().get("organic", [])[:3]
+    except (requests.RequestException, ValueError) as exc:
+        logger.warning("Web search failed: %s", exc)
+        return {"search_message": "The web search request failed."}
+    return {"search_message": f"Search returned {len(hits)} result(s) for the first long sentence. "
+                              "Check them by hand; a result is not proof of copying.",
+            "search_sources": [{"title": h.get("title"), "url": h.get("link")} for h in hits]}

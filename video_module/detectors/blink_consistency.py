@@ -6,9 +6,8 @@ import os
 logger = logging.getLogger(__name__)
 
 # Initialize OpenCV Cascades
-CASCADE_PATH = os.path.join(cv2.__path__[0], 'data')
-face_cascade = cv2.CascadeClassifier(os.path.join(CASCADE_PATH, 'haarcascade_frontalface_default.xml'))
-eye_cascade = cv2.CascadeClassifier(os.path.join(CASCADE_PATH, 'haarcascade_eye.xml'))
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
 
 def analyze_blink_consistency(video_path, max_frames=150):
     """

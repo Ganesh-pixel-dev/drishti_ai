@@ -1,132 +1,33 @@
 {% extends 'base.html' %}
+{% block title %}Text check | Drishti AI{% endblock %}
 {% block content %}
+<h1>Text check</h1>
+<p class="lede">Scores a passage on phrase and style habits common in machine-written text.</p>
+<div class="notice"><strong>Unvalidated.</strong> This is a hand-written list of phrases and style rules. It has not been tested on labelled text, it will misjudge formal human writing and non-native English, and it cannot recognise AI text that avoids those phrases. Do not use it to accuse anyone.</div>
 
-{% if not result %}
-<div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-    <div class="glass-card animate-in" style="width: 100%; max-width: 750px; padding: 48px;">
-        <div style="margin-bottom: 32px; display: flex; align-items: start; gap: 24px;">
-            <div style="width: 54px; height: 54px; background: rgba(0, 242, 255, 0.1); border: 1px solid var(--accent); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            </div>
-            <div>
-                <h1 style="font-size: 2.2em; margin-bottom: 8px; font-weight: 900; letter-spacing: -1px;">Text Forensics</h1>
-                <p style="color: var(--text-secondary); font-size: 0.95em;">Analyze linguistic entropy, perplexity, and plagiarism markers.</p>
-            </div>
-        </div>
-
-        <form method="POST" class="forensic-form">
-            {% csrf_token %}
-            <div style="position: relative; background: var(--surface-2); border: 1px solid var(--border-medium); border-radius: 4px; padding: 4px;">
-                <div style="display: flex; gap: 8px; padding: 12px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 4px;">
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #ff5f56;"></div>
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #ffbd2e;"></div>
-                    <div style="width: 8px; height: 8px; border-radius: 50%; background: #27c93f;"></div>
-                    <span style="font-family: monospace; font-size: 0.6em; color: var(--text-muted); margin-left: 10px; letter-spacing: 2px;">SECURE_INPUT.TERMINAL</span>
-                </div>
-                <textarea 
-                    name="text_content" 
-                    id="textInput"
-                    placeholder="PROMPT: PASTE_DATA_FOR_ENTROPY_ANALYSIS_"
-                    required 
-                    style="width: 100%; min-height: 280px; padding: 24px; font-family: 'Space Grotesk', monospace; font-size: 1.1em; line-height: 1.6; border: none; background: transparent; color: var(--text-primary); resize: none; outline: none;"
-                ></textarea>
-                
-                <div id="charCount" style="position: absolute; bottom: 16px; right: 16px; font-family: monospace; font-size: 0.65em; color: var(--accent); opacity: 0.7; background: rgba(0, 242, 255, 0.05); padding: 4px 10px; border: 1px solid rgba(0, 242, 255, 0.1);">
-                    0 CHARS
-                </div>
-            </div>
-
-            <button type="submit" class="btn" style="width: 100%; margin-top: 24px;">
-                <span>Execute Linguistic Deep-Scan</span>
-            </button>
-        </form>
-    </div>
+<div class="panel">
+  <form method="post">{% csrf_token %}
+    <label for="text_content" class="label">Paste text (up to 20,000 characters)</label>
+    <textarea id="text_content" name="text_content" maxlength="20000" required>{{ submitted_text }}</textarea>
+    <p><button type="submit">Analyse</button></p>
+  </form>
 </div>
 
-<script>
-    const textInput = document.getElementById('textInput');
-    const charCount = document.getElementById('charCount');
+{% if notice %}<div class="notice">{{ notice }}</div>{% endif %}
+{% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
 
-    textInput.addEventListener('input', () => {
-        const count = textInput.value.length;
-        charCount.textContent = `${count} CHARS`;
-    });
-</script>
-
-{% else %}
-<!-- DASHBOARD HEADER -->
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-shrink: 0;">
-    <div style="font-family: monospace; font-size: 0.75em; color: var(--text-muted); letter-spacing: 3px;">
-        <span style="color: var(--accent);">[ STATUS ]</span> LINGUISTIC_REPORT_ANALYSIS_v4.2
-    </div>
-    <a href="/text" class="btn btn-secondary" style="padding: 10px 24px; font-size: 11px;">
-        <span>New Evidence</span>
-    </a>
-</div>
-
-<!-- DASHBOARD GRID -->
-<div class="dashboard-grid text-grid">
-    
-    <!-- EVIDENCE & EXPLANATION COLUMN -->
-    <div style="display: flex; flex-direction: column; gap: 24px; min-height: 0;">
-        <div class="glass-card" style="flex: 1; display: flex; flex-direction: column; padding: 24px; min-height: 0;">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-shrink: 0;">
-                <h3 style="font-size: 0.7em; letter-spacing: 2px; color: var(--text-muted);">Source Evidence</h3>
-                <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
-            </div>
-            <div class="inner-scroll" style="flex: 1; min-height: 0; padding: 20px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); overflow-y: auto;">
-                <p style="color: var(--text-secondary); line-height: 1.8; white-space: pre-wrap; font-family: 'Space Grotesk', sans-serif; font-size: 0.95em;">{{ submitted_text }}</p>
-            </div>
-        </div>
-
-        <div class="glass-card" style="padding: 24px; flex-shrink: 0;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                <h3 style="font-size: 0.75em; letter-spacing: 2px;">Forensic Rationale</h3>
-            </div>
-            <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.85em;">{{ result.explanation }}</p>
-        </div>
-    </div>
-
-    <!-- RESULTS DASHBOARD -->
-    <div style="display: flex; flex-direction: column; gap: 24px; min-height: 0;">
-        <!-- Verdict Bento -->
-        <div class="glass-card" style="padding: 32px; border-left: 4px solid {% if result.is_ai %}var(--accent-danger){% else %}var(--accent-success){% endif %}; flex-shrink: 0;">
-            <p style="font-size: 0.6em; letter-spacing: 3px; color: var(--text-muted); margin-bottom: 16px;">AI CLASSIFICATION</p>
-            <h2 style="font-size: 3em; font-weight: 900; line-height: 1; color: {% if result.is_ai %}var(--accent-danger){% else %}var(--accent-success){% endif %};">
-                {% if result.is_ai %}SYNTHETIC<br>PROVENANCE{% else %}HUMAN<br>AUTHORED{% endif %}
-            </h2>
-        </div>
-
-        <!-- Plagiarism Bento -->
-        <div class="glass-card" style="flex: 1; min-height: 0; padding: 24px; display: flex; flex-direction: column;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0;">
-                <h3 style="font-size: 0.7em; letter-spacing: 2px; color: var(--text-muted);">PLAGIARISM SCAN</h3>
-                <span style="font-size: 0.55em; font-weight: 900; color: {% if result.plagiarism_found %}var(--accent-danger){% else %}var(--accent-success){% endif %};">
-                    {% if result.plagiarism_found %}THREAT_SHIELD_ACTIVE{% else %}NORMAL_SIGNAL{% endif %}
-                </span>
-            </div>
-            
-            <div style="padding: 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: 2px; margin-bottom: 16px; flex-shrink: 0;">
-                <p style="color: var(--text-secondary); font-size: 0.85em; line-height: 1.5;">{{ result.plagiarism_message }}</p>
-            </div>
-
-            {% if result.plagiarism_found %}
-            <div class="inner-scroll" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 4px;">
-                {% for source in result.plagiarism_sources %}
-                <a href="{{ source.url }}" target="_blank" class="glass-card" style="padding: 12px; text-decoration: none; transition: transform 0.2s; border-color: rgba(255,255,255,0.05); flex-shrink: 0;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                        <span style="font-size: 0.75em; color: var(--text-primary); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ source.title }}</span>
-                    </div>
-                </a>
-                {% endfor %}
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-{% include 'chat_widget.html' %}
+{% if result %}
+<section class="panel">
+  <h2>{% if result.is_ai %}Flagged for human review: reads like machine-written text{% else %}Not flagged{% endif %}</h2>
+  <div class="meter{% if result.is_ai %} flag{% endif %}" role="img" aria-label="Heuristic score {{ result.ai_confidence }} of 100"><i style="width: {{ result.ai_confidence }}%"></i></div>
+  <p class="caveat">Heuristic score <span class="mono">{{ result.ai_confidence }}</span> of 100 (flag at 35). This is a sum of rule hits, not a probability.</p>
+  <p>{{ result.explanation }}</p>
+</section>
+<section class="panel">
+  <h2>Web search</h2>
+  <p>{{ result.search_message }}</p>
+  {% if result.search_sources %}<ul>{% for s in result.search_sources %}<li><a href="{{ s.url }}" rel="noopener noreferrer">{{ s.title }}</a></li>{% endfor %}</ul>{% endif %}
+</section>
 {% endif %}
+{% include 'chat_widget.html' %}
 {% endblock %}

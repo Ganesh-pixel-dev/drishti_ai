@@ -8,10 +8,14 @@ searched the label for "ai", which never matched "artificial" and made the secon
 model always vote "real".)
 """
 import logging
+import os
 
 from PIL import Image
 
 logger = logging.getLogger(__name__)
+
+# Only PyTorch is used. A half-installed TensorFlow breaks `import transformers.pipeline`.
+os.environ.setdefault("USE_TF", "0")
 
 MODELS = {
     "vit_deepfake": ("dima806/deepfake_vs_real_image_detection", "fake"),

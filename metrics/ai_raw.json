@@ -1,0 +1,255 @@
+{
+  "task": "ai",
+  "condition": "raw",
+  "only_ext": null,
+  "seed": 1337,
+  "split": {
+    "cal": 2000,
+    "test": 1750,
+    "external_test": 0
+  },
+  "sources": [
+    "tiny-genimage"
+  ],
+  "selection": {
+    "min_auc_edge_from_0.5": 0.03,
+    "variants_cv": {
+      "detectors": {
+        "features": [
+          "cfa",
+          "compression",
+          "noise",
+          "median",
+          "wavelet",
+          "luminance",
+          "histogram",
+          "frequency",
+          "adversarial"
+        ],
+        "C": 10.0,
+        "cv_auc_cal": 0.90245
+      },
+      "detectors+classifiers": {
+        "features": [
+          "cfa",
+          "compression",
+          "noise",
+          "median",
+          "wavelet",
+          "luminance",
+          "histogram",
+          "frequency",
+          "adversarial",
+          "clf_swin_sdxl"
+        ],
+        "C": 10.0,
+        "cv_auc_cal": 0.914282
+      },
+      "classifiers_only": {
+        "features": [
+          "clf_swin_sdxl"
+        ],
+        "C": 1.0,
+        "cv_auc_cal": 0.683209
+      }
+    },
+    "chosen": "detectors+classifiers"
+  },
+  "per_detector": {
+    "ela": {
+      "auc_cal": 0.512432,
+      "auc_test": 0.4496470204081633,
+      "auc_external": null,
+      "kept": false,
+      "inapplicable_share_cal": 0.0
+    },
+    "cfa": {
+      "auc_cal": 0.10579050000000001,
+      "auc_test": 0.10795232653061224,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "compression": {
+      "auc_cal": 0.33187200000000006,
+      "auc_test": 0.3649867755102041,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "noise": {
+      "auc_cal": 0.363069,
+      "auc_test": 0.32785371428571425,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "median": {
+      "auc_cal": 0.616912,
+      "auc_test": 0.5193404081632653,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "wavelet": {
+      "auc_cal": 0.44853299999999996,
+      "auc_test": 0.4042553469387755,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "luminance": {
+      "auc_cal": 0.597086,
+      "auc_test": 0.6309015510204082,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "histogram": {
+      "auc_cal": 0.6339345,
+      "auc_test": 0.614877387755102,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "patch": {
+      "auc_cal": 0.5018505,
+      "auc_test": 0.4507728979591837,
+      "auc_external": null,
+      "kept": false,
+      "inapplicable_share_cal": 0.0065
+    },
+    "frequency": {
+      "auc_cal": 0.2849865,
+      "auc_test": 0.2417724081632653,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.107
+    },
+    "reflection": {
+      "auc_cal": 0.4995,
+      "auc_test": 0.49771167346938766,
+      "auc_external": null,
+      "kept": false,
+      "inapplicable_share_cal": 0.999
+    },
+    "adversarial": {
+      "auc_cal": 0.634981,
+      "auc_test": 0.582115918367347,
+      "auc_external": null,
+      "kept": true,
+      "inapplicable_share_cal": 0.0
+    },
+    "geometric": {
+      "auc_cal": 0.498,
+      "auc_test": 0.4994285714285714,
+      "auc_external": null,
+      "kept": false,
+      "inapplicable_share_cal": 0.984
+    },
+    "boundary": {
+      "auc_cal": 0.497994,
+      "auc_test": 0.486915918367347,
+      "auc_external": null,
+      "kept": false,
+      "inapplicable_share_cal": 0.984
+    },
+    "exif": {
+      "auc_cal": 0.4995,
+      "auc_test": 0.5051428571428571,
+      "auc_external": null,
+      "kept": false,
+      "inapplicable_share_cal": 0.9595
+    }
+  },
+  "coefficients": {
+    "cfa": -3.9271095708863673,
+    "compression": 0.8506401610691564,
+    "noise": -0.11750451115499198,
+    "median": 0.01237639219965222,
+    "wavelet": -0.08632533475658198,
+    "luminance": -0.01775920907396848,
+    "histogram": 0.00396197318816331,
+    "frequency": -0.5336838305952187,
+    "adversarial": 0.07077045805956865,
+    "clf_swin_sdxl": 0.7016042854102629
+  },
+  "intercept": 0.9500201063316565,
+  "cal_in_sample": {
+    "n": 2000,
+    "n_positive": 1000,
+    "accuracy": 0.8495,
+    "roc_auc": 0.917462,
+    "roc_auc_ci95": [
+      0.9052153774257057,
+      0.9292663496218286
+    ],
+    "precision": 0.8861878453038674,
+    "recall": 0.802,
+    "confusion": {
+      "tn": 897,
+      "fp": 103,
+      "fn": 198,
+      "tp": 802
+    },
+    "baseline_accuracy_majority_class": 0.5
+  },
+  "test": {
+    "n": 1750,
+    "n_positive": 875,
+    "accuracy": 0.852,
+    "roc_auc": 0.9277231020408164,
+    "roc_auc_ci95": [
+      0.9151131270287924,
+      0.9389717328070147
+    ],
+    "precision": 0.885,
+    "recall": 0.8091428571428572,
+    "confusion": {
+      "tn": 783,
+      "fp": 92,
+      "fn": 167,
+      "tp": 708
+    },
+    "baseline_accuracy_majority_class": 0.5
+  },
+  "metadata_only_baseline_test": {
+    "n": 1750,
+    "n_positive": 875,
+    "accuracy": 1.0,
+    "roc_auc": 1.0,
+    "roc_auc_ci95": [
+      0.9999999999999999,
+      1.0
+    ],
+    "precision": 1.0,
+    "recall": 1.0,
+    "confusion": {
+      "tn": 875,
+      "fp": 0,
+      "fn": 0,
+      "tp": 875
+    },
+    "baseline_accuracy_majority_class": 0.5
+  },
+  "per_classifier": {
+    "clf_vit_deepfake": {
+      "auc_cal": 0.38093999999999995,
+      "auc_test": 0.4602044081632653
+    },
+    "clf_swin_sdxl": {
+      "auc_cal": 0.705025,
+      "auc_test": 0.7441802448979591
+    }
+  },
+  "test_per_generator_recall": {
+    "ADM": 0.976,
+    "BigGAN": 0.96,
+    "GLIDE": 0.832,
+    "Midjourney": 0.856,
+    "SD15": 0.672,
+    "VQDM": 0.832,
+    "Wukong": 0.536
+  },
+  "test_real_specificity": 0.8948571428571429
+}

@@ -41,7 +41,7 @@ def analyze_temporal_noise(video_path, samples=15, jitter=1.0):
         c = np.corrcoef(n1.flatten(), n2.flatten())[0, 1]
         correlations.append(c)
 
-    avg_corr = np.mean(correlations)
+    avg_corr = float(np.nanmean(correlations)) if not np.all(np.isnan(correlations)) else 0.0
     
     # [ARMADA v2] Absolute Physics Override
     # High correlation + Low Jitter = Authentic Static Video

@@ -1,147 +1,37 @@
 {% extends 'base.html' %}
+{% block title %}Video check | Drishti AI{% endblock %}
 {% block content %}
+<h1>Video check</h1>
+<p class="lede">Samples frames and runs seven temporal checks (blink rate, landmark jitter, optical flow, pulse signal and others).</p>
+<div class="notice"><strong>Unvalidated.</strong> None of the video checks has been benchmarked, and the frame-level image models were trained on photos, not video. Treat every number as a guess to be checked by a person.</div>
 
-{% if not result %}
-<div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-    <div class="glass-card animate-in" style="width: 100%; max-width: 650px; padding: 48px;">
-        <div style="margin-bottom: 32px; display: flex; align-items: start; gap: 20px;">
-            <div style="width: 54px; height: 54px; background: rgba(0, 242, 255, 0.1); border: 1px solid var(--accent); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--accent); flex-shrink: 0;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
-            </div>
-            <div>
-                <h1 style="font-size: 2em; margin-bottom: 8px; font-weight: 900; letter-spacing: -1px;">Video Forensics</h1>
-                <p style="color: var(--text-secondary); font-size: 0.95em;">Temporal analysis & Deepfake detection engine.</p>
-            </div>
-        </div>
-
-        <form method="POST" enctype="multipart/form-data" class="forensic-form">
-            {% csrf_token %}
-            <div id="dropzone" style="border: 1px dashed var(--border-medium); border-radius: 4px; padding: 60px 20px; text-align: center; background: rgba(255,255,255,0.01); transition: all 0.3s ease; position: relative;">
-                <div id="uploadUI">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom: 20px;"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                    <p style="color: var(--text-primary); font-weight: 700; margin-bottom: 4px;">Initialize Video Stream Audit</p>
-                    <p style="color: var(--text-muted); font-size: 0.85em;">Drop .mp4, .avi, or .mov evidence samples</p>
-                </div>
-                <input type="file" name="video" id="fileInput" required accept="video/*" style="position: absolute; inset: 0; opacity: 0; cursor: none;">
-                
-                <div id="filePreview" style="display: none; margin-top: 20px;">
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; border: 1px solid var(--border-medium); border-radius: 2px; background: rgba(255,255,255,0.02);">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                        <p id="fileName" style="color: var(--text-primary); font-family: monospace; font-size: 0.8em;"></p>
-                    </div>
-                </div>
-            </div>
-
-            <button type="submit" class="btn" style="width: 100%; margin-top: 24px;">
-                <span>Begin Frame-by-Frame Audit</span>
-            </button>
-        </form>
-    </div>
+<div class="panel">
+  <form class="upload" method="post" enctype="multipart/form-data">{% csrf_token %}
+    <label for="video" class="label">Video (MP4, AVI, MOV, MKV, WebM, up to 100 MB)</label>
+    <input id="video" type="file" name="video" accept="video/*" required>
+    <button type="submit">Analyse</button>
+  </form>
+  <p class="caveat">Analysis can take a minute. The file is deleted afterwards.</p>
 </div>
 
-<script>
-    const dropzone = document.getElementById('dropzone');
-    const fileInput = document.getElementById('fileInput');
-    const filePreview = document.getElementById('filePreview');
-    const fileName = document.getElementById('fileName');
-    const uploadUI = document.getElementById('uploadUI');
+{% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
 
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            fileName.textContent = e.target.files[0].name;
-            filePreview.style.display = 'block';
-            uploadUI.style.display = 'none';
-            dropzone.style.borderStyle = 'solid';
-            dropzone.style.borderColor = 'var(--accent)';
-        }
-    });
-</script>
-
-{% else %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-shrink: 0;">
-    <div style="font-family: monospace; font-size: 0.7em; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase;">
-        [ Video Metadata: {{ result.metadata|slice:":50" }}... ]
-    </div>
-    <a href="/video" class="btn btn-secondary" style="padding: 10px 20px; font-size: 11px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-        <span>Reset Stream Analysis</span>
-    </a>
-</div>
-
-<div class="dashboard-grid">
-    
-    <!-- PRIMARY ANALYSIS -->
-    <div style="display: flex; flex-direction: column; gap: 24px; min-height: 0;">
-        <div class="glass-card" style="padding: 40px; border-left: 4px solid {% if 'AI' in result.verdict or 'Edited' in result.verdict %}var(--accent-danger){% else %}var(--accent-success){% endif %}; flex-shrink: 0;">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
-                <span style="font-size: 0.6em; letter-spacing: 3px; color: var(--text-muted);">TEMPORAL CONSENSUS</span>
-                <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
-            </div>
-            
-            <h2 style="font-size: 2.2em; font-weight: 900; line-height: 1.2; margin-bottom: 24px; color: {% if 'AI' in result.verdict or 'Edited' in result.verdict %}var(--accent-danger){% else %}var(--accent-success){% endif %};">
-                {{ result.verdict }}
-            </h2>
-            
-            <p style="color: var(--text-secondary); line-height: 1.8; font-size: 0.95em;">{{ result.notes }}</p>
-        </div>
-
-    </div>
-
-    <!-- METRICS SIDEBAR -->
-    <div style="display: flex; flex-direction: column; gap: 24px; min-height: 0;">
-        <div class="glass-card inner-scroll" style="padding: 32px; overflow-y: auto;">
-            <h3 style="font-size: 0.75em; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 24px;">Signal Confidence Indices</h3>
-            
-            <div style="display: flex; flex-direction: column; gap: 24px;">
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="font-size: 0.65em; color: var(--text-secondary);">Vision Audit</span>
-                        <span style="font-size: 0.65em; color: var(--accent); font-weight: 700;">{{ result.avg_confidence|default:"0" }}%</span>
-                    </div>
-                    <div style="height: 4px; background: var(--surface-2); border-radius: 10px; overflow: hidden;">
-                        <div style="height: 100%; width: {{ result.avg_confidence|default:"0" }}%; background: var(--accent); box-shadow: 0 0 10px var(--accent-glow);"></div>
-                    </div>
-                </div>
-
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="font-size: 0.65em; color: var(--text-secondary);">Texture Fidelity</span>
-                        <span style="font-size: 0.65em; color: var(--accent); font-weight: 700;">{{ result.texture_confidence }}%</span>
-                    </div>
-                    <div style="height: 4px; background: var(--surface-2); border-radius: 10px; overflow: hidden;">
-                        <div style="height: 100%; width: {{ result.texture_confidence }}%; background: var(--accent);"></div>
-                    </div>
-                </div>
-
-                <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span style="font-size: 0.65em; color: var(--text-secondary);">Temporal Jitter Delta</span>
-                        <span style="font-size: 0.65em; color: var(--accent); font-weight: 700;">{{ result.jitter_score|floatformat:2 }}</span>
-                    </div>
-                    <div style="height: 4px; background: var(--surface-2); border-radius: 10px; overflow: hidden;">
-                        <div style="height: 100%; width: {{ result.jitter_score }}%; background: var(--accent);"></div>
-                    </div>
-                </div>
-            </div>
-
-            {% if result.shield_token %}
-            <div style="margin-top: 40px; padding: 24px; text-align: center; border: 1px solid var(--accent-success); border-style: dashed; background: rgba(16, 185, 129, 0.02);">
-                <p style="font-size: 0.55em; letter-spacing: 2px; color: var(--accent-success); margin-bottom: 8px;">DIGITAL GUARDIAN TOKEN</p>
-                <div style="font-family: monospace; font-size: 1.1em; color: var(--text-primary); font-weight: 900;">{{ result.shield_token }}</div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-
-</div>
-
-<style>
-    @keyframes pulseData {
-        0%, 100% { opacity: 0.2; transform: scaleY(1); }
-        50% { opacity: 0.6; transform: scaleY(1.5); }
-    }
-</style>
-
-{% include 'chat_widget.html' %}
+{% if result %}
+<section class="panel">
+  <h2>{{ result.verdict }}</h2>
+  <p class="caveat">{{ result.frames_analyzed }} frames sampled from {{ result.duration }} s. {{ result.flagged_frame_percent }}% of sampled frames were flagged by the image models. Strongest video check: {{ result.strongest_check }}.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Check</th><th class="num">Score (0 to 1)</th></tr></thead>
+    <tbody>{% for name, value in result.checks.items %}<tr><td>{{ name }}</td><td class="num">{{ value|floatformat:2 }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+<section class="panel">
+  <h2>Sampled frames</h2>
+  <div class="scroll"><table>
+    <thead><tr><th class="num">Second</th><th class="num">Edit score</th><th class="num">AI score</th><th>Flagged</th></tr></thead>
+    <tbody>{% for f in result.timeline %}<tr><td class="num">{{ f.sec }}</td><td class="num">{{ f.edit|default_if_none:"n/a" }}</td><td class="num">{{ f.ai|default_if_none:"n/a" }}</td><td>{% if f.flagged %}yes{% else %}no{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
 {% endif %}
+{% include 'chat_widget.html' %}
 {% endblock %}

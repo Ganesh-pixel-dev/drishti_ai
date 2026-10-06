@@ -6,10 +6,9 @@ import os
 logger = logging.getLogger(__name__)
 
 # Initialize OpenCV Cascades
-CASCADE_PATH = os.path.join(cv2.__path__[0], 'data')
-face_cascade = cv2.CascadeClassifier(os.path.join(CASCADE_PATH, 'haarcascade_frontalface_default.xml'))
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-def detect_heartbeat(video_path, samples=30):
+def detect_heartbeat(video_path, seconds=8):
     """
     Biological Armour: Detects human heart rate from sub-pixel skin color changes (r-PPG).
     AI videos (Sora/Runway) often lack this biological signal.
@@ -24,6 +23,8 @@ def detect_heartbeat(video_path, samples=30):
     # We need a face for this. 
     # If a face exists but provides 0 heartbeat, it's a massive AI flag.
     
+    # The pulse band (0.8-3 Hz) needs several seconds of signal to be resolved at all.
+    samples = int(fps * seconds)
     green_signals = []
     face_found = False
     
@@ -57,7 +58,7 @@ def detect_heartbeat(video_path, samples=30):
         # We return a 0 score but indicate face absence.
         return {"score": 0.0, "details": "No face detected for biological scan."}
 
-    if len(green_signals) < samples // 2:
+    if len(green_signals) < max(int(fps * 4), samples // 2):
         return {"score": 0.0, "details": "Signal too short/unstable."}
 
     # Signal Processing: Find Heart Rate (60-100 BPM range)
